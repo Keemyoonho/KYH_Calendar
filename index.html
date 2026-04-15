@@ -7,7 +7,7 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
-  .app { max-width: 980px; margin: 30px auto; padding: 0 16px; }
+  .app { max-width: 980px; margin: 30px auto; padding: 0 16px 40px; }
 
   .header {
     background: linear-gradient(135deg, #667eea, #764ba2);
@@ -50,46 +50,107 @@
   .btn-add { background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; padding: 12px 32px; border-radius: 50px; font-size: 0.95rem; cursor: pointer; font-weight: 700; box-shadow: 0 4px 15px rgba(102,126,234,0.4); transition: transform .15s, box-shadow .15s; }
   .btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
 
+  /* ── 메모 섹션 ── */
+  .memo-section { margin-top: 28px; }
+  .memo-section-title {
+    font-size: 1rem; font-weight: 800; color: #444;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .memo-save-badge {
+    font-size: 0.68rem; color: #aaa; font-weight: 400;
+    background: #f0f0f0; padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* 큰 메모 */
+  .memo-main {
+    background: white; border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  .memo-main-label {
+    font-size: 0.78rem; font-weight: 700; color: #667eea;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 5px;
+  }
+  .memo-main textarea {
+    width: 100%; border: none; outline: none; resize: none;
+    font-family: inherit; font-size: 0.9rem; color: #333;
+    line-height: 1.7; min-height: 130px;
+    background: transparent;
+  }
+  .memo-main textarea::placeholder { color: #ccc; }
+
+  /* 하단 2개 메모 */
+  .memo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .memo-sub {
+    background: white; border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 16px 18px;
+  }
+  .memo-sub-label {
+    font-size: 0.78rem; font-weight: 700; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .memo-sub-label span { display: flex; align-items: center; gap: 5px; }
+  .memo-sub textarea {
+    width: 100%; border: none; outline: none; resize: none;
+    font-family: inherit; font-size: 0.88rem; color: #333;
+    line-height: 1.7; min-height: 100px;
+    background: transparent;
+  }
+  .memo-sub textarea::placeholder { color: #ccc; }
+
+  /* todo list */
+  .todo-list { list-style: none; margin-bottom: 6px; }
+  .todo-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item input[type=checkbox] { accent-color: #667eea; cursor: pointer; flex-shrink: 0; transform: scale(1.1); }
+  .todo-item span { font-size: 0.86rem; color: #333; flex: 1; cursor: pointer; }
+  .todo-item span.done { text-decoration: line-through; color: #aaa; }
+  .todo-item .del-todo { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.75rem; padding: 0 2px; }
+  .todo-item .del-todo:hover { color: #e74c3c; }
+  .todo-input-row { display: flex; gap: 6px; margin-top: 8px; }
+  .todo-input-row input {
+    flex: 1; border: 1.5px solid #eee; border-radius: 8px;
+    padding: 6px 10px; font-size: 0.82rem; outline: none;
+    font-family: inherit; transition: border .2s;
+  }
+  .todo-input-row input:focus { border-color: #667eea; }
+  .todo-add-btn {
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    color: white; border: none; border-radius: 8px;
+    padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700;
+  }
+
+  .memo-char { font-size: 0.72rem; color: #ccc; text-align: right; margin-top: 4px; }
+
   /* Overlays */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
   .overlay.open { display: flex; }
-
-  /* Add/Edit Modal */
   .modal { background: white; border-radius: 16px; padding: 28px; width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: pop .2s ease; }
   @keyframes pop { from { transform: scale(0.92); opacity:0; } to { transform: scale(1); opacity:1; } }
   .modal h2 { margin-bottom: 18px; color: #333; font-size: 1.05rem; }
   .modal label { display: block; font-size: 0.82rem; color: #555; margin-bottom: 4px; margin-top: 13px; font-weight: 600; }
-  .modal input, .modal select, .modal textarea {
-    width: 100%; padding: 9px 12px; border: 1.5px solid #e0e0e0;
-    border-radius: 8px; font-size: 0.88rem; outline: none; transition: border .2s;
-    font-family: inherit;
-  }
+  .modal input, .modal select, .modal textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 0.88rem; outline: none; transition: border .2s; font-family: inherit; }
   .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: #667eea; }
   .modal textarea { resize: vertical; min-height: 60px; }
   .opt-label { font-size: 0.75rem; color: #aaa; font-weight: 400; margin-left: 4px; }
-
   .check-row { display: flex; align-items: center; gap: 8px; margin-top: 13px; }
   .check-row input[type=checkbox] { width: auto; cursor: pointer; accent-color: #667eea; transform: scale(1.2); flex-shrink: 0; }
   .check-row label { font-size: 0.82rem; color: #555; margin: 0; cursor: pointer; font-weight: 600; }
   .toggle-section { margin-top: 10px; }
-
   .time-row { display: flex; gap: 10px; }
   .time-row input { flex: 1; }
-
   .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
   .btn-save { flex:1; background: linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; padding:11px; border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:700; }
   .btn-cancel { flex:1; background:#f0f0f0; color:#555; border:none; padding:11px; border-radius:8px; font-size:0.9rem; cursor:pointer; }
   .btn-cancel:hover { background:#e0e0e0; }
 
-  /* Detail Modal */
   .detail-modal { background: white; border-radius: 16px; width: 440px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: pop .2s ease; overflow: hidden; }
   .detail-header { padding: 18px 22px 14px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .detail-date { font-size: 1.1rem; font-weight: 800; color: #222; }
   .detail-close { background: none; border: none; font-size: 1.3rem; color: #999; cursor: pointer; }
   .detail-close:hover { color: #333; }
   .detail-body { padding: 14px 20px 20px; overflow-y: auto; }
-
-  /* Event Card (detail) */
   .evt-card { border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; position: relative; border-left: 4px solid transparent; }
   .evt-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
   .cat-badge { display: inline-flex; align-items: center; font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; color: white; }
@@ -97,7 +158,7 @@
   .evt-action-btn { background: rgba(0,0,0,0.08); border: none; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer; color: #444; transition: background .15s; }
   .evt-action-btn:hover { background: rgba(0,0,0,0.16); }
   .evt-title { font-size: 0.97rem; font-weight: 700; color: #1a1a1a; margin-bottom: 5px; }
-  .evt-time { font-size: 0.78rem; color: #555; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .evt-time { font-size: 0.78rem; color: #555; margin-bottom: 4px; }
   .evt-deadline { font-size: 0.78rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 6px; font-weight: 600; }
   .evt-deadline.urgent { background: #fff3cd; color: #856404; }
   .evt-deadline.overdue { background: #fde8e8; color: #c0392b; }
@@ -106,15 +167,14 @@
   .evt-link { font-size: 0.78rem; margin-top: 6px; }
   .evt-link a { color: #667eea; text-decoration: none; display: flex; align-items: center; gap: 4px; }
   .evt-link a:hover { text-decoration: underline; }
-
   .detail-add-btn { width: 100%; padding: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 8px; font-size: 0.88rem; cursor: pointer; font-weight: 700; margin-top: 4px; }
   .detail-add-btn:hover { opacity: 0.9; }
   .no-event { text-align: center; color: #aaa; font-size: 0.85rem; padding: 20px 0; }
-
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 </style>
-<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=55346"></script></head>
+<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=56481"></script>
+</head>
 <body>
 <div class="app">
   <div class="header">
@@ -144,8 +204,47 @@
     </div>
     <div class="days" id="daysGrid"></div>
   </div>
+
   <div class="bottom">
     <button class="btn-add" onclick="openAddModal()">+ 일정 추가</button>
+  </div>
+
+  <!-- ── 메모 섹션 ── -->
+  <div class="memo-section">
+    <div class="memo-section-title">
+      📝 메모
+      <span class="memo-save-badge">자동 저장</span>
+    </div>
+
+    <!-- 큰 메모 -->
+    <div class="memo-main">
+      <div class="memo-main-label">📋 이번 달 메모</div>
+      <textarea id="mainMemo" placeholder="자유롭게 메모하세요..." oninput="saveMemo()"></textarea>
+      <div class="memo-char" id="mainMemoChar">0자</div>
+    </div>
+
+    <!-- 하단 2칸 -->
+    <div class="memo-row">
+      <!-- 왼쪽: 빠른 메모 -->
+      <div class="memo-sub">
+        <div class="memo-sub-label">
+          <span>⚡ 빠른 메모</span>
+        </div>
+        <textarea id="quickMemo" placeholder="빠르게 적어두고 싶은 것들..." oninput="saveMemo()"></textarea>
+      </div>
+
+      <!-- 오른쪽: 할 일 목록 -->
+      <div class="memo-sub">
+        <div class="memo-sub-label">
+          <span>✅ 할 일 목록</span>
+        </div>
+        <ul class="todo-list" id="todoList"></ul>
+        <div class="todo-input-row">
+          <input type="text" id="todoInput" placeholder="할 일 추가..." onkeydown="todoKey(event)" />
+          <button class="todo-add-btn" onclick="addTodo()">추가</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -155,10 +254,8 @@
     <h2 id="modalTitle">📝 일정 추가</h2>
     <label>제목</label>
     <input type="text" id="evtTitle" placeholder="일정 제목 입력" />
-
     <label>날짜</label>
     <input type="date" id="evtDate" />
-
     <label>카테고리</label>
     <select id="evtCat">
       <option value="school">🏫 학교 관련</option>
@@ -167,8 +264,6 @@
       <option value="anniv">🎉 기념일</option>
       <option value="etc">📌 그 외</option>
     </select>
-
-    <!-- 시간 -->
     <div class="check-row">
       <input type="checkbox" id="useTime" onchange="toggleSection('timeFields',this)" />
       <label for="useTime">⏰ 시간 설정</label>
@@ -177,11 +272,9 @@
       <label>시작 시간</label>
       <div class="time-row">
         <input type="time" id="evtStart" />
-        <input type="time" id="evtEnd" placeholder="종료" />
+        <input type="time" id="evtEnd" />
       </div>
     </div>
-
-    <!-- 마감일 -->
     <div class="check-row">
       <input type="checkbox" id="useDeadline" onchange="toggleSection('deadlineFields',this)" />
       <label for="useDeadline">⚠️ 마감일 설정</label>
@@ -192,8 +285,6 @@
       <label>마감 메모 <span class="opt-label">(선택)</span></label>
       <input type="text" id="evtDeadlineMemo" placeholder="예: 활동일 포함 7일 이내 제출" />
     </div>
-
-    <!-- 링크 -->
     <div class="check-row">
       <input type="checkbox" id="useLink" onchange="toggleSection('linkFields',this)" />
       <label for="useLink">🔗 링크 추가</label>
@@ -204,11 +295,8 @@
       <label>링크 이름 <span class="opt-label">(선택)</span></label>
       <input type="text" id="evtLinkLabel" placeholder="예: 과제 제출 페이지" />
     </div>
-
-    <!-- 메모 -->
     <label>메모 <span class="opt-label">(선택)</span></label>
     <textarea id="evtMemo" placeholder="추가 메모"></textarea>
-
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeAddModal()">취소</button>
       <button class="btn-save" onclick="saveEvent()">저장</button>
@@ -237,199 +325,197 @@ const CATS = {
 };
 
 let events = JSON.parse(localStorage.getItem('yoonho_v2') || '[]');
+let todos  = JSON.parse(localStorage.getItem('yoonho_todos') || '[]');
 let cur = new Date();
 let detailDate = '';
 let editIdx = -1;
 
 function save() { localStorage.setItem('yoonho_v2', JSON.stringify(events)); }
+function saveMemo() {
+  localStorage.setItem('yoonho_mainMemo', document.getElementById('mainMemo').value);
+  localStorage.setItem('yoonho_quickMemo', document.getElementById('quickMemo').value);
+  const len = document.getElementById('mainMemo').value.length;
+  document.getElementById('mainMemoChar').textContent = len + '자';
+}
+function saveTodos() { localStorage.setItem('yoonho_todos', JSON.stringify(todos)); }
+function loadMemo() {
+  const m = localStorage.getItem('yoonho_mainMemo') || '';
+  const q = localStorage.getItem('yoonho_quickMemo') || '';
+  document.getElementById('mainMemo').value = m;
+  document.getElementById('quickMemo').value = q;
+  document.getElementById('mainMemoChar').textContent = m.length + '자';
+}
+
+function renderTodos() {
+  const ul = document.getElementById('todoList');
+  ul.innerHTML = todos.map((t,i) =>
+    `<li class="todo-item">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${i})" />
+      <span class="${t.done?'done':''}" onclick="toggleTodo(${i})">${t.text}</span>
+      <button class="del-todo" onclick="delTodo(${i})">✕</button>
+    </li>`
+  ).join('');
+}
+function addTodo() {
+  const inp = document.getElementById('todoInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  todos.push({ text, done: false });
+  saveTodos(); renderTodos();
+  inp.value = '';
+}
+function toggleTodo(i) { todos[i].done = !todos[i].done; saveTodos(); renderTodos(); }
+function delTodo(i) { todos.splice(i,1); saveTodos(); renderTodos(); }
+function todoKey(e) { if(e.key==='Enter') addTodo(); }
 
 function todayStr() {
   const t = new Date();
   return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 }
-
 function fmtTime(t) {
   if (!t) return '';
   const [h,m] = t.split(':');
-  const hh = +h, ampm = hh >= 12 ? '오후' : '오전';
-  const hd = hh===0?12:hh>12?hh-12:hh;
+  const hh=+h, ampm=hh>=12?'오후':'오전', hd=hh===0?12:hh>12?hh-12:hh;
   return `${ampm} ${hd}:${m}`;
 }
-
 function fmtDate(d) {
   if (!d) return '';
   const [y,m,day] = d.split('-');
   return `${+m}월 ${+day}일`;
 }
-
 function deadlineStatus(dStr) {
   if (!dStr) return null;
   const today = new Date(); today.setHours(0,0,0,0);
   const dl = new Date(dStr); dl.setHours(0,0,0,0);
-  const diff = Math.ceil((dl - today) / 86400000);
-  if (diff < 0) return { cls: 'overdue', icon: '🚨', text: `마감 ${Math.abs(diff)}일 초과` };
-  if (diff <= 3) return { cls: 'urgent', icon: '⚠️', text: diff===0 ? '오늘 마감!' : `마감 D-${diff}` };
-  return { cls: 'normal', icon: '📅', text: `마감 ${fmtDate(dStr)} (D-${diff})` };
+  const diff = Math.ceil((dl-today)/86400000);
+  if (diff<0) return {cls:'overdue',icon:'🚨',text:`마감 ${Math.abs(diff)}일 초과`};
+  if (diff<=3) return {cls:'urgent',icon:'⚠️',text:diff===0?'오늘 마감!':`마감 D-${diff}`};
+  return {cls:'normal',icon:'📅',text:`마감 ${fmtDate(dStr)} (D-${diff})`};
 }
-
-function toggleSection(id, cb) {
-  document.getElementById(id).style.display = cb.checked ? 'block' : 'none';
+function toggleSection(id,cb) {
+  document.getElementById(id).style.display = cb.checked?'block':'none';
 }
 
 function render() {
-  const y = cur.getFullYear(), m = cur.getMonth();
-  document.getElementById('monthLabel').textContent = `${y}년 ${m+1}월`;
-  const first = new Date(y,m,1).getDay();
-  const lastDay = new Date(y,m+1,0).getDate();
-  const prevLast = new Date(y,m,0).getDate();
-  const today = new Date();
-
-  let html = '';
-  for (let i = 0; i < 42; i++) {
-    let day, cls = 'day', dateStr;
-    if (i < first) {
-      day = prevLast - first + 1 + i;
-      const pm=m===0?12:m, py=m===0?y-1:y;
-      dateStr = `${py}-${String(pm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      cls += ' other-month';
-    } else if (i >= first+lastDay) {
-      day = i - first - lastDay + 1;
-      const nm=m===11?1:m+2, ny=m===11?y+1:y;
-      dateStr = `${ny}-${String(nm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      cls += ' other-month';
+  const y=cur.getFullYear(), m=cur.getMonth();
+  document.getElementById('monthLabel').textContent=`${y}년 ${m+1}월`;
+  const first=new Date(y,m,1).getDay(), lastDay=new Date(y,m+1,0).getDate(), prevLast=new Date(y,m,0).getDate();
+  const today=new Date();
+  let html='';
+  for(let i=0;i<42;i++){
+    let day,cls='day',dateStr;
+    if(i<first){
+      day=prevLast-first+1+i;
+      const pm=m===0?12:m,py=m===0?y-1:y;
+      dateStr=`${py}-${String(pm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      cls+=' other-month';
+    } else if(i>=first+lastDay){
+      day=i-first-lastDay+1;
+      const nm=m===11?1:m+2,ny=m===11?y+1:y;
+      dateStr=`${ny}-${String(nm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      cls+=' other-month';
     } else {
-      day = i - first + 1;
-      dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      if (day===today.getDate()&&m===today.getMonth()&&y===today.getFullYear()) cls+=' today';
+      day=i-first+1;
+      dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      if(day===today.getDate()&&m===today.getMonth()&&y===today.getFullYear()) cls+=' today';
     }
-    const dayEvts = events.filter(e=>e.date===dateStr)
-      .sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
-    const badges = dayEvts.map(e => {
-      const cat = CATS[e.cat]||CATS.etc;
-      const dl = deadlineStatus(e.deadline);
-      const warn = dl && (dl.cls==='urgent'||dl.cls==='overdue') ? ' ⚠' : '';
-      const t = e.start ? ` ${fmtTime(e.start)}` : '';
+    const dayEvts=events.filter(e=>e.date===dateStr).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
+    const badges=dayEvts.map(e=>{
+      const cat=CATS[e.cat]||CATS.etc;
+      const dl=deadlineStatus(e.deadline);
+      const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' ⚠':'';
+      const t=e.start?` ${fmtTime(e.start)}`:'';
       return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${e.title}${t}${warn}</div>`;
     }).join('');
-    html += `<div class="${cls}" onclick="openDetailModal(event,'${dateStr}')">
-      <div class="day-num">${day}</div>
-      <div class="events">${badges}</div>
-    </div>`;
+    html+=`<div class="${cls}" onclick="openDetailModal(event,'${dateStr}')"><div class="day-num">${day}</div><div class="events">${badges}</div></div>`;
   }
-  document.getElementById('daysGrid').innerHTML = html;
+  document.getElementById('daysGrid').innerHTML=html;
 }
 
-function changeMonth(d) { cur.setMonth(cur.getMonth()+d); render(); }
+function changeMonth(d){cur.setMonth(cur.getMonth()+d);render();}
 
-function openAddModal(date, idx) {
-  editIdx = (idx !== undefined) ? idx : -1;
-  const isEdit = editIdx >= 0;
-  document.getElementById('modalTitle').textContent = isEdit ? '✏️ 일정 수정' : '📝 일정 추가';
-
-  const e = isEdit ? events[editIdx] : {};
-  document.getElementById('evtTitle').value = e.title || '';
-  document.getElementById('evtDate').value = e.date || date || todayStr();
-  document.getElementById('evtCat').value = e.cat || 'school';
-  document.getElementById('evtMemo').value = e.memo || '';
-
-  const ut = !!(e.start);
-  document.getElementById('useTime').checked = ut;
-  document.getElementById('timeFields').style.display = ut ? 'block' : 'none';
-  document.getElementById('evtStart').value = e.start || '';
-  document.getElementById('evtEnd').value = e.end || '';
-
-  const ud = !!(e.deadline);
-  document.getElementById('useDeadline').checked = ud;
-  document.getElementById('deadlineFields').style.display = ud ? 'block' : 'none';
-  document.getElementById('evtDeadline').value = e.deadline || '';
-  document.getElementById('evtDeadlineMemo').value = e.deadlineMemo || '';
-
-  const ul = !!(e.link);
-  document.getElementById('useLink').checked = ul;
-  document.getElementById('linkFields').style.display = ul ? 'block' : 'none';
-  document.getElementById('evtLink').value = e.link || '';
-  document.getElementById('evtLinkLabel').value = e.linkLabel || '';
-
+function openAddModal(date,idx){
+  editIdx=(idx!==undefined)?idx:-1;
+  const isEdit=editIdx>=0;
+  document.getElementById('modalTitle').textContent=isEdit?'✏️ 일정 수정':'📝 일정 추가';
+  const e=isEdit?events[editIdx]:{};
+  document.getElementById('evtTitle').value=e.title||'';
+  document.getElementById('evtDate').value=e.date||date||todayStr();
+  document.getElementById('evtCat').value=e.cat||'school';
+  document.getElementById('evtMemo').value=e.memo||'';
+  const ut=!!(e.start);
+  document.getElementById('useTime').checked=ut;
+  document.getElementById('timeFields').style.display=ut?'block':'none';
+  document.getElementById('evtStart').value=e.start||'';
+  document.getElementById('evtEnd').value=e.end||'';
+  const ud=!!(e.deadline);
+  document.getElementById('useDeadline').checked=ud;
+  document.getElementById('deadlineFields').style.display=ud?'block':'none';
+  document.getElementById('evtDeadline').value=e.deadline||'';
+  document.getElementById('evtDeadlineMemo').value=e.deadlineMemo||'';
+  const ul=!!(e.link);
+  document.getElementById('useLink').checked=ul;
+  document.getElementById('linkFields').style.display=ul?'block':'none';
+  document.getElementById('evtLink').value=e.link||'';
+  document.getElementById('evtLinkLabel').value=e.linkLabel||'';
   document.getElementById('addOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('evtTitle').focus(), 100);
+  setTimeout(()=>document.getElementById('evtTitle').focus(),100);
 }
-function closeAddModal() { document.getElementById('addOverlay').classList.remove('open'); editIdx=-1; }
-function closeAddOutside(e) { if(e.target.id==='addOverlay') closeAddModal(); }
+function closeAddModal(){document.getElementById('addOverlay').classList.remove('open');editIdx=-1;}
+function closeAddOutside(e){if(e.target.id==='addOverlay')closeAddModal();}
 
-function saveEvent() {
-  const title = document.getElementById('evtTitle').value.trim();
-  const date  = document.getElementById('evtDate').value;
-  const cat   = document.getElementById('evtCat').value;
-  const memo  = document.getElementById('evtMemo').value.trim();
-  const useTime = document.getElementById('useTime').checked;
-  const start = useTime ? document.getElementById('evtStart').value : '';
-  const end   = useTime ? document.getElementById('evtEnd').value : '';
-  const useDL = document.getElementById('useDeadline').checked;
-  const deadline = useDL ? document.getElementById('evtDeadline').value : '';
-  const deadlineMemo = useDL ? document.getElementById('evtDeadlineMemo').value.trim() : '';
-  const useLink = document.getElementById('useLink').checked;
-  const link = useLink ? document.getElementById('evtLink').value.trim() : '';
-  const linkLabel = useLink ? document.getElementById('evtLinkLabel').value.trim() : '';
-
-  if (!title) { document.getElementById('evtTitle').focus(); return; }
-  if (!date)  { document.getElementById('evtDate').focus(); return; }
-
-  const obj = { title, date, cat, memo, start, end, deadline, deadlineMemo, link, linkLabel };
-  if (editIdx >= 0) events[editIdx] = obj;
-  else events.push(obj);
-
-  save(); render(); closeAddModal();
-  if (detailDate === date) renderDetail(date);
-  else if (editIdx >= 0) renderDetail(obj.date);
+function saveEvent(){
+  const title=document.getElementById('evtTitle').value.trim();
+  const date=document.getElementById('evtDate').value;
+  const cat=document.getElementById('evtCat').value;
+  const memo=document.getElementById('evtMemo').value.trim();
+  const useTime=document.getElementById('useTime').checked;
+  const start=useTime?document.getElementById('evtStart').value:'';
+  const end=useTime?document.getElementById('evtEnd').value:'';
+  const useDL=document.getElementById('useDeadline').checked;
+  const deadline=useDL?document.getElementById('evtDeadline').value:'';
+  const deadlineMemo=useDL?document.getElementById('evtDeadlineMemo').value.trim():'';
+  const useLink=document.getElementById('useLink').checked;
+  const link=useLink?document.getElementById('evtLink').value.trim():'';
+  const linkLabel=useLink?document.getElementById('evtLinkLabel').value.trim():'';
+  if(!title){document.getElementById('evtTitle').focus();return;}
+  if(!date){document.getElementById('evtDate').focus();return;}
+  const obj={title,date,cat,memo,start,end,deadline,deadlineMemo,link,linkLabel};
+  if(editIdx>=0) events[editIdx]=obj; else events.push(obj);
+  save();render();closeAddModal();
+  if(detailDate===date) renderDetail(date);
+  else if(editIdx>=0) renderDetail(obj.date);
 }
 
-function openDetailModal(e, dateStr) {
+function openDetailModal(e,dateStr){
   e.stopPropagation();
-  detailDate = dateStr;
-  const parts = dateStr.split('-');
-  const d = new Date(+parts[0],+parts[1]-1,+parts[2]);
-  const days = ['일','월','화','수','목','금','토'];
-  document.getElementById('detailDate').textContent =
-    `${+parts[1]}월 ${+parts[2]}일 (${days[d.getDay()]})`;
+  detailDate=dateStr;
+  const parts=dateStr.split('-');
+  const d=new Date(+parts[0],+parts[1]-1,+parts[2]);
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('detailDate').textContent=`${+parts[1]}월 ${+parts[2]}일 (${days[d.getDay()]})`;
   renderDetail(dateStr);
   document.getElementById('detailOverlay').classList.add('open');
 }
-function closeDetailModal() { document.getElementById('detailOverlay').classList.remove('open'); detailDate=''; }
-function closeDetailOutside(e) { if(e.target.id==='detailOverlay') closeDetailModal(); }
+function closeDetailModal(){document.getElementById('detailOverlay').classList.remove('open');detailDate='';}
+function closeDetailOutside(e){if(e.target.id==='detailOverlay')closeDetailModal();}
 
-function renderDetail(dateStr) {
-  const dayEvts = events.map((e,i)=>({...e,_i:i})).filter(e=>e.date===dateStr)
+function renderDetail(dateStr){
+  const dayEvts=events.map((e,i)=>({...e,_i:i})).filter(e=>e.date===dateStr)
     .sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
-
-  let html = '';
-  if (!dayEvts.length) html = '<div class="no-event">등록된 일정이 없어요</div>';
-
-  dayEvts.forEach(e => {
-    const cat = CATS[e.cat]||CATS.etc;
-    const dl = deadlineStatus(e.deadline);
-
-    let timeHtml = '';
-    if (e.start) {
-      timeHtml = `<div class="evt-time">⏰ ${fmtTime(e.start)}`;
-      if (e.end) timeHtml += ` ~ ${fmtTime(e.end)}`;
-      timeHtml += `</div>`;
-    }
-
-    let dlHtml = '';
-    if (dl) {
-      const memo = e.deadlineMemo ? ` — ${e.deadlineMemo}` : '';
-      dlHtml = `<div class="evt-deadline ${dl.cls}">${dl.icon} ${dl.text}${memo}</div>`;
-    }
-
-    let linkHtml = '';
-    if (e.link) {
-      const label = e.linkLabel || e.link;
-      linkHtml = `<div class="evt-link">🔗 <a href="${e.link}" target="_blank" rel="noopener">${label}</a></div>`;
-    }
-
-    let memoHtml = e.memo ? `<div class="evt-memo">📌 ${e.memo}</div>` : '';
-
-    html += `<div class="evt-card" style="background:${cat.bg}; border-left-color:${cat.border}">
+  let html='';
+  if(!dayEvts.length) html='<div class="no-event">등록된 일정이 없어요</div>';
+  dayEvts.forEach(e=>{
+    const cat=CATS[e.cat]||CATS.etc;
+    const dl=deadlineStatus(e.deadline);
+    let timeHtml='';
+    if(e.start){timeHtml=`<div class="evt-time">⏰ ${fmtTime(e.start)}`;if(e.end)timeHtml+=` ~ ${fmtTime(e.end)}`;timeHtml+='</div>';}
+    let dlHtml='';
+    if(dl){const memo=e.deadlineMemo?` — ${e.deadlineMemo}`:'';dlHtml=`<div class="evt-deadline ${dl.cls}">${dl.icon} ${dl.text}${memo}</div>`;}
+    let linkHtml='';
+    if(e.link){const label=e.linkLabel||e.link;linkHtml=`<div class="evt-link">🔗 <a href="${e.link}" target="_blank" rel="noopener">${label}</a></div>`;}
+    let memoHtml=e.memo?`<div class="evt-memo">📌 ${e.memo}</div>`:'';
+    html+=`<div class="evt-card" style="background:${cat.bg};border-left-color:${cat.border}">
       <div class="evt-card-top">
         <span class="cat-badge" style="background:${cat.color}">${cat.label}</span>
         <div class="evt-actions">
@@ -441,32 +527,21 @@ function renderDetail(dateStr) {
       ${timeHtml}${dlHtml}${memoHtml}${linkHtml}
     </div>`;
   });
-
-  html += `<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
-  document.getElementById('detailBody').innerHTML = html;
+  html+=`<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
+  document.getElementById('detailBody').innerHTML=html;
 }
 
-function editEvent(idx, dateStr) {
-  closeDetailModal();
-  openAddModal(dateStr, idx);
-}
+function editEvent(idx,dateStr){closeDetailModal();openAddModal(dateStr,idx);}
+function delEvent(idx,dateStr){if(!confirm('삭제할까요?'))return;events.splice(idx,1);save();render();renderDetail(dateStr);}
+function openAddFromDetail(dateStr){closeDetailModal();openAddModal(dateStr);}
 
-function delEvent(idx, dateStr) {
-  if (!confirm('삭제할까요?')) return;
-  events.splice(idx,1);
-  save(); render(); renderDetail(dateStr);
-}
-
-function openAddFromDetail(dateStr) {
-  closeDetailModal();
-  openAddModal(dateStr);
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key==='Escape') { closeAddModal(); closeDetailModal(); }
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeAddModal();closeDetailModal();}
 });
 
 render();
+loadMemo();
+renderTodos();
 </script>
 </body>
 </html>
