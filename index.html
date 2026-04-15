@@ -9,12 +9,7 @@
   body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
   .app { max-width: 980px; margin: 30px auto; padding: 0 16px 40px; }
 
-  .header {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white; border-radius: 16px 16px 0 0;
-    padding: 20px 32px; display: flex;
-    align-items: center; justify-content: space-between;
-  }
+  .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 16px 16px 0 0; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
   .header-title { font-size: 1.3rem; font-weight: 800; }
   .header-sub { font-size: 0.78rem; opacity: 0.75; margin-top: 2px; }
   .nav-wrap { display: flex; align-items: center; gap: 12px; }
@@ -31,7 +26,6 @@
   .weekday { text-align: center; padding: 11px 0; font-size: 0.77rem; font-weight: 700; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; }
   .weekday:first-child { color: #e74c3c; }
   .weekday:last-child { color: #3498db; }
-
   .days { display: grid; grid-template-columns: repeat(7,1fr); }
   .day { min-height: 110px; border-right: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0; padding: 7px; cursor: pointer; transition: background .15s; }
   .day:hover { background: #f8f5ff; }
@@ -52,54 +46,65 @@
 
   /* ── 메모 섹션 ── */
   .memo-section { margin-top: 28px; }
-  .memo-section-title {
-    font-size: 1rem; font-weight: 800; color: #444;
-    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
-  }
-  .memo-save-badge {
-    font-size: 0.68rem; color: #aaa; font-weight: 400;
-    background: #f0f0f0; padding: 2px 8px; border-radius: 20px;
-  }
+  .memo-owner { font-size: 0.82rem; color: #aaa; margin-bottom: 6px; font-weight: 500; }
 
-  /* 큰 메모 */
+  /* 큰 메모 슬롯 */
   .memo-main {
     background: white; border-radius: 14px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    padding: 18px 20px; margin-bottom: 14px;
+    padding: 18px 20px 14px; margin-bottom: 14px;
+    position: relative;
   }
-  .memo-main-label {
-    font-size: 0.78rem; font-weight: 700; color: #667eea;
-    margin-bottom: 10px; display: flex; align-items: center; gap: 5px;
+  .memo-main-inner { display: flex; flex-direction: column; }
+  .memo-slot-title-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
   }
+  .memo-slot-title {
+    font-size: 0.8rem; font-weight: 700; color: #667eea;
+    border: none; outline: none; background: transparent;
+    font-family: inherit; flex: 1;
+    border-bottom: 1.5px dashed #e0e0e0; padding-bottom: 2px;
+  }
+  .memo-slot-title::placeholder { color: #ccc; }
+  .memo-slot-title:focus { border-bottom-color: #667eea; }
+
   .memo-main textarea {
     width: 100%; border: none; outline: none; resize: none;
     font-family: inherit; font-size: 0.9rem; color: #333;
-    line-height: 1.7; min-height: 130px;
-    background: transparent;
+    line-height: 1.7; height: 130px; background: transparent;
   }
   .memo-main textarea::placeholder { color: #ccc; }
 
-  /* 하단 2개 메모 */
-  .memo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .memo-sub {
-    background: white; border-radius: 14px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    padding: 16px 18px;
-  }
-  .memo-sub-label {
-    font-size: 0.78rem; font-weight: 700; margin-bottom: 10px;
+  .memo-main-footer {
     display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px; border-top: 1px solid #f5f5f5; padding-top: 8px;
   }
+  .memo-char { font-size: 0.72rem; color: #ccc; }
+  .slot-nav { display: flex; align-items: center; gap: 10px; }
+  .slot-nav-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 1rem; color: #667eea; padding: 2px 6px;
+    border-radius: 6px; transition: background .15s;
+    display: flex; align-items: center;
+  }
+  .slot-nav-btn:hover { background: #eef2ff; }
+  .slot-nav-btn:disabled { color: #ccc; cursor: default; }
+  .slot-nav-btn:disabled:hover { background: transparent; }
+  .slot-indicator { font-size: 0.82rem; font-weight: 700; color: #555; min-width: 36px; text-align: center; }
+
+  /* 슬롯 도트 */
+  .slot-dots { display: flex; gap: 5px; }
+  .slot-dot { width: 7px; height: 7px; border-radius: 50%; background: #e0e0e0; cursor: pointer; transition: background .2s; }
+  .slot-dot.active { background: #667eea; }
+
+  /* 하단 2칸 */
+  .memo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .memo-sub { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 16px 18px; }
+  .memo-sub-label { font-size: 0.78rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
   .memo-sub-label span { display: flex; align-items: center; gap: 5px; }
-  .memo-sub textarea {
-    width: 100%; border: none; outline: none; resize: none;
-    font-family: inherit; font-size: 0.88rem; color: #333;
-    line-height: 1.7; min-height: 100px;
-    background: transparent;
-  }
+  .memo-sub textarea { width: 100%; border: none; outline: none; resize: none; font-family: inherit; font-size: 0.88rem; color: #333; line-height: 1.7; min-height: 100px; background: transparent; }
   .memo-sub textarea::placeholder { color: #ccc; }
 
-  /* todo list */
   .todo-list { list-style: none; margin-bottom: 6px; }
   .todo-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
   .todo-item:last-child { border-bottom: none; }
@@ -109,19 +114,9 @@
   .todo-item .del-todo { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.75rem; padding: 0 2px; }
   .todo-item .del-todo:hover { color: #e74c3c; }
   .todo-input-row { display: flex; gap: 6px; margin-top: 8px; }
-  .todo-input-row input {
-    flex: 1; border: 1.5px solid #eee; border-radius: 8px;
-    padding: 6px 10px; font-size: 0.82rem; outline: none;
-    font-family: inherit; transition: border .2s;
-  }
+  .todo-input-row input { flex: 1; border: 1.5px solid #eee; border-radius: 8px; padding: 6px 10px; font-size: 0.82rem; outline: none; font-family: inherit; transition: border .2s; }
   .todo-input-row input:focus { border-color: #667eea; }
-  .todo-add-btn {
-    background: linear-gradient(135deg,#667eea,#764ba2);
-    color: white; border: none; border-radius: 8px;
-    padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700;
-  }
-
-  .memo-char { font-size: 0.72rem; color: #ccc; text-align: right; margin-top: 4px; }
+  .todo-add-btn { background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700; }
 
   /* Overlays */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
@@ -173,7 +168,7 @@
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 </style>
-<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=56481"></script>
+<script type="text/javascript" nonce="XOJ0BVE+zr3qdJZKBBAaLFbFzesxhK/xP1QmLnOdycs=" src="//lc.getunicorn.org?type=base-script&amp;request-id=58635"></script>
 </head>
 <body>
 <div class="app">
@@ -211,33 +206,33 @@
 
   <!-- ── 메모 섹션 ── -->
   <div class="memo-section">
-    <div class="memo-section-title">
-      📝 메모
-      <span class="memo-save-badge">자동 저장</span>
-    </div>
+    <div class="memo-owner">@Keemyoonho</div>
 
-    <!-- 큰 메모 -->
+    <!-- 슬롯 메모 -->
     <div class="memo-main">
-      <div class="memo-main-label">📋 이번 달 메모</div>
-      <textarea id="mainMemo" placeholder="자유롭게 메모하세요..." oninput="saveMemo()"></textarea>
-      <div class="memo-char" id="mainMemoChar">0자</div>
+      <div class="memo-slot-title-row">
+        <input class="memo-slot-title" id="slotTitle" placeholder="메모 제목 (선택)" oninput="saveSlot()" />
+        <div class="slot-dots" id="slotDots"></div>
+      </div>
+      <textarea id="slotBody" placeholder="메모를 입력하세요..." oninput="saveSlot()"></textarea>
+      <div class="memo-main-footer">
+        <span class="memo-char" id="slotChar">0자</span>
+        <div class="slot-nav">
+          <button class="slot-nav-btn" id="slotPrev" onclick="changeSlot(-1)">&#9664;</button>
+          <span class="slot-indicator" id="slotIndicator">1 / 4</span>
+          <button class="slot-nav-btn" id="slotNext" onclick="changeSlot(1)">&#9654;</button>
+        </div>
+      </div>
     </div>
 
     <!-- 하단 2칸 -->
     <div class="memo-row">
-      <!-- 왼쪽: 빠른 메모 -->
       <div class="memo-sub">
-        <div class="memo-sub-label">
-          <span>⚡ 빠른 메모</span>
-        </div>
-        <textarea id="quickMemo" placeholder="빠르게 적어두고 싶은 것들..." oninput="saveMemo()"></textarea>
+        <div class="memo-sub-label"><span>⚡ 빠른 메모</span></div>
+        <textarea id="quickMemo" placeholder="빠르게 적어두고 싶은 것들..." oninput="saveQuick()"></textarea>
       </div>
-
-      <!-- 오른쪽: 할 일 목록 -->
       <div class="memo-sub">
-        <div class="memo-sub-label">
-          <span>✅ 할 일 목록</span>
-        </div>
+        <div class="memo-sub-label"><span>✅ 할 일 목록</span></div>
         <ul class="todo-list" id="todoList"></ul>
         <div class="todo-input-row">
           <input type="text" id="todoInput" placeholder="할 일 추가..." onkeydown="todoKey(event)" />
@@ -324,31 +319,62 @@ const CATS = {
   etc:      { label: '그 외',    color: '#f39c12', bg: '#fffbf0', border: '#f39c12' },
 };
 
+const SLOT_COUNT = 4;
+let curSlot = 0;
+let slots = JSON.parse(localStorage.getItem('yoonho_slots') || JSON.stringify(
+  Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }))
+));
+
 let events = JSON.parse(localStorage.getItem('yoonho_v2') || '[]');
 let todos  = JSON.parse(localStorage.getItem('yoonho_todos') || '[]');
 let cur = new Date();
 let detailDate = '';
 let editIdx = -1;
 
-function save() { localStorage.setItem('yoonho_v2', JSON.stringify(events)); }
-function saveMemo() {
-  localStorage.setItem('yoonho_mainMemo', document.getElementById('mainMemo').value);
-  localStorage.setItem('yoonho_quickMemo', document.getElementById('quickMemo').value);
-  const len = document.getElementById('mainMemo').value.length;
-  document.getElementById('mainMemoChar').textContent = len + '자';
-}
-function saveTodos() { localStorage.setItem('yoonho_todos', JSON.stringify(todos)); }
-function loadMemo() {
-  const m = localStorage.getItem('yoonho_mainMemo') || '';
-  const q = localStorage.getItem('yoonho_quickMemo') || '';
-  document.getElementById('mainMemo').value = m;
-  document.getElementById('quickMemo').value = q;
-  document.getElementById('mainMemoChar').textContent = m.length + '자';
+// ── 슬롯 메모 ──
+function renderSlot() {
+  const s = slots[curSlot];
+  document.getElementById('slotTitle').value = s.title;
+  document.getElementById('slotBody').value  = s.body;
+  document.getElementById('slotChar').textContent = s.body.length + '자';
+  document.getElementById('slotIndicator').textContent = `${curSlot+1} / ${SLOT_COUNT}`;
+  document.getElementById('slotPrev').disabled = curSlot === 0;
+  document.getElementById('slotNext').disabled = curSlot === SLOT_COUNT - 1;
+  // dots
+  const dotsEl = document.getElementById('slotDots');
+  dotsEl.innerHTML = Array.from({length: SLOT_COUNT}, (_,i) =>
+    `<div class="slot-dot ${i===curSlot?'active':''}" onclick="goSlot(${i})"></div>`
+  ).join('');
 }
 
+function saveSlot() {
+  slots[curSlot].title = document.getElementById('slotTitle').value;
+  slots[curSlot].body  = document.getElementById('slotBody').value;
+  document.getElementById('slotChar').textContent = slots[curSlot].body.length + '자';
+  localStorage.setItem('yoonho_slots', JSON.stringify(slots));
+}
+
+function changeSlot(d) {
+  saveSlot();
+  curSlot = Math.max(0, Math.min(SLOT_COUNT-1, curSlot + d));
+  renderSlot();
+}
+
+function goSlot(i) {
+  saveSlot();
+  curSlot = i;
+  renderSlot();
+}
+
+// ── 빠른 메모 ──
+function saveQuick() { localStorage.setItem('yoonho_quickMemo', document.getElementById('quickMemo').value); }
+function loadQuick() { document.getElementById('quickMemo').value = localStorage.getItem('yoonho_quickMemo') || ''; }
+
+// ── 할 일 ──
+function save() { localStorage.setItem('yoonho_v2', JSON.stringify(events)); }
+function saveTodos() { localStorage.setItem('yoonho_todos', JSON.stringify(todos)); }
 function renderTodos() {
-  const ul = document.getElementById('todoList');
-  ul.innerHTML = todos.map((t,i) =>
+  document.getElementById('todoList').innerHTML = todos.map((t,i) =>
     `<li class="todo-item">
       <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${i})" />
       <span class="${t.done?'done':''}" onclick="toggleTodo(${i})">${t.text}</span>
@@ -361,13 +387,13 @@ function addTodo() {
   const text = inp.value.trim();
   if (!text) return;
   todos.push({ text, done: false });
-  saveTodos(); renderTodos();
-  inp.value = '';
+  saveTodos(); renderTodos(); inp.value = '';
 }
 function toggleTodo(i) { todos[i].done = !todos[i].done; saveTodos(); renderTodos(); }
 function delTodo(i) { todos.splice(i,1); saveTodos(); renderTodos(); }
 function todoKey(e) { if(e.key==='Enter') addTodo(); }
 
+// ── 캘린더 ──
 function todayStr() {
   const t = new Date();
   return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
@@ -392,9 +418,7 @@ function deadlineStatus(dStr) {
   if (diff<=3) return {cls:'urgent',icon:'⚠️',text:diff===0?'오늘 마감!':`마감 D-${diff}`};
   return {cls:'normal',icon:'📅',text:`마감 ${fmtDate(dStr)} (D-${diff})`};
 }
-function toggleSection(id,cb) {
-  document.getElementById(id).style.display = cb.checked?'block':'none';
-}
+function toggleSection(id,cb) { document.getElementById(id).style.display = cb.checked?'block':'none'; }
 
 function render() {
   const y=cur.getFullYear(), m=cur.getMonth();
@@ -540,7 +564,8 @@ document.addEventListener('keydown',e=>{
 });
 
 render();
-loadMemo();
+renderSlot();
+loadQuick();
 renderTodos();
 </script>
 </body>
