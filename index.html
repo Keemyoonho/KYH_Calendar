@@ -59,6 +59,8 @@
   /* 메모 */
   .memo-section { margin-top: 28px; }
   .memo-owner { font-size: 0.82rem; color: #aaa; margin-bottom: 6px; font-weight: 500; }
+
+  /* 주 메모 슬롯 */
   .memo-main { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 18px 20px 14px; margin-bottom: 14px; }
   .memo-slot-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .memo-slot-title { font-size: 0.8rem; font-weight: 700; color: #667eea; border: none; outline: none; background: transparent; font-family: inherit; flex: 1; border-bottom: 1.5px dashed #e0e0e0; padding-bottom: 2px; }
@@ -78,11 +80,18 @@
   .slot-dot { width: 7px; height: 7px; border-radius: 50%; background: #e0e0e0; cursor: pointer; transition: background .2s; }
   .slot-dot.active { background: #667eea; }
 
+  /* 빠른 메모 — 전체 너비, 주 메모와 동일한 크기 */
+  .memo-quick-full { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 18px 20px 14px; margin-bottom: 14px; }
+  .memo-quick-full .memo-sub-label { font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+  .memo-quick-full textarea { width: 100%; border: none; outline: none; resize: none; font-family: inherit; font-size: 0.9rem; color: #333; line-height: 1.7; height: 130px; background: transparent; }
+  .memo-quick-full textarea::placeholder { color: #ccc; }
+  .memo-quick-footer { display: flex; align-items: center; justify-content: flex-end; margin-top: 10px; border-top: 1px solid #f5f5f5; padding-top: 8px; }
+  .memo-quick-char { font-size: 0.72rem; color: #ccc; }
+
+  /* 할 일 목록 + Buy list 2열 */
   .memo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .memo-sub { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 16px 18px; }
   .memo-sub-label { font-size: 0.78rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
-  .memo-sub textarea { width: 100%; border: none; outline: none; resize: none; font-family: inherit; font-size: 0.88rem; color: #333; line-height: 1.7; min-height: 100px; background: transparent; }
-  .memo-sub textarea::placeholder { color: #ccc; }
   .todo-list { list-style: none; margin-bottom: 6px; }
   .todo-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
   .todo-item:last-child { border-bottom: none; }
@@ -95,6 +104,11 @@
   .todo-input-row input { flex: 1; border: 1.5px solid #eee; border-radius: 8px; padding: 6px 10px; font-size: 0.82rem; outline: none; font-family: inherit; transition: border .2s; }
   .todo-input-row input:focus { border-color: #667eea; }
   .todo-add-btn { background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700; }
+
+  /* Buy list 전용 accent */
+  .buy-accent { accent-color: #e91e9a; }
+  .buy-add-btn { background: linear-gradient(135deg,#e91e9a,#c2185b); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700; }
+  .buy-input-row input:focus { border-color: #e91e9a; }
 
   /* Overlays */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
@@ -199,6 +213,8 @@
 
   <div class="memo-section">
     <div class="memo-owner">@Keemyoonho</div>
+
+    <!-- 1. 주 메모 슬롯 -->
     <div class="memo-main">
       <div class="memo-slot-title-row">
         <input class="memo-slot-title" id="slotTitle" placeholder="메모 제목 (선택)" oninput="saveSlot()" />
@@ -214,17 +230,35 @@
         </div>
       </div>
     </div>
-    <div class="memo-row">
-      <div class="memo-sub">
-        <div class="memo-sub-label">⚡ 빠른 메모</div>
-        <textarea id="quickMemo" placeholder="빠르게 적어두고 싶은 것들..." oninput="scheduleSync()"></textarea>
+
+    <!-- 2. 빠른 메모 (전체 너비, 주 메모와 동일 크기) -->
+    <div class="memo-quick-full">
+      <div class="memo-sub-label">⚡ 빠른 메모</div>
+      <textarea id="quickMemo" placeholder="빠르게 적어두고 싶은 것들..." oninput="scheduleSync()"></textarea>
+      <div class="memo-quick-footer">
+        <span class="memo-quick-char" id="quickChar">0자</span>
       </div>
+    </div>
+
+    <!-- 3. 할 일 목록 + Buy list (2열) -->
+    <div class="memo-row">
+      <!-- 할 일 목록 -->
       <div class="memo-sub">
         <div class="memo-sub-label">✅ 할 일 목록</div>
         <ul class="todo-list" id="todoList"></ul>
         <div class="todo-input-row">
           <input type="text" id="todoInput" placeholder="할 일 추가..." onkeydown="todoKey(event)" />
           <button class="todo-add-btn" onclick="addTodo()">추가</button>
+        </div>
+      </div>
+
+      <!-- Buy list -->
+      <div class="memo-sub">
+        <div class="memo-sub-label">🛒 Buy list</div>
+        <ul class="todo-list" id="buyList"></ul>
+        <div class="todo-input-row buy-input-row">
+          <input type="text" id="buyInput" placeholder="살 것 추가..." onkeydown="buyKey(event)" />
+          <button class="buy-add-btn" onclick="addBuy()">추가</button>
         </div>
       </div>
     </div>
@@ -310,11 +344,12 @@ let curSlot = 0;
 let slots  = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
 let events = [];
 let todos  = [];
+let buys   = [];   // ← Buy list
 let cur = new Date();
 let detailDate = '';
 let editIdx = -1;
 let syncTimer = null;
-let isRemoteUpdate = false; // 원격 업데이트로 인한 UI 갱신 중인지 표시
+let isRemoteUpdate = false;
 
 // ── 동기화 상태 표시 ──
 function setSyncStatus(state, msg) {
@@ -329,7 +364,7 @@ function setSyncStatus(state, msg) {
   }
 }
 
-// ── Firebase 실시간 리스너 (핵심: onValue로 모든 기기에서 실시간 반영) ──
+// ── Firebase 실시간 리스너 ──
 function startRealtimeSync() {
   setSyncStatus('syncing', '연결 중...');
   DATA_REF.on('value', (snapshot) => {
@@ -338,26 +373,26 @@ function startRealtimeSync() {
     if (data) {
       events = Array.isArray(data.events) ? data.events : [];
       todos  = Array.isArray(data.todos)  ? data.todos  : [];
+      buys   = Array.isArray(data.buys)   ? data.buys   : [];
       if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) slots = data.slots;
       const quickMemoEl = document.getElementById('quickMemo');
-      // 사용자가 현재 입력 중이 아닐 때만 덮어쓰기
       if (document.activeElement !== quickMemoEl) {
         quickMemoEl.value = data.quickMemo || '';
+        updateQuickChar();
       }
-      // 슬롯도 현재 편집 중이 아닐 때만 덮어쓰기
       if (document.activeElement !== document.getElementById('slotTitle') &&
           document.activeElement !== document.getElementById('slotBody')) {
         renderSlot();
       }
     } else {
-      events = []; todos = [];
+      events = []; todos = []; buys = [];
       slots = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
     }
     render();
     renderTodos();
+    renderBuys();
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
-    // 로컬에도 백업
     saveLocal();
   }, (error) => {
     setSyncStatus('err', '연결 실패 — 로컬 데이터 사용 중');
@@ -372,6 +407,7 @@ function pushToFirebase() {
   const payload = {
     events,
     todos,
+    buys,
     slots,
     quickMemo: document.getElementById('quickMemo').value,
     updatedAt: Date.now(),
@@ -384,14 +420,18 @@ function pushToFirebase() {
     });
 }
 
-// 입력 후 1.5초 뒤 Firebase에 저장 (debounce)
 function scheduleSync() {
   if (isRemoteUpdate) return;
+  updateQuickChar();
   clearTimeout(syncTimer);
   syncTimer = setTimeout(pushToFirebase, 1500);
 }
 
-// 수동 새로고침 (연결이 끊겼을 때 유용)
+function updateQuickChar() {
+  const v = document.getElementById('quickMemo').value;
+  document.getElementById('quickChar').textContent = v.length + '자';
+}
+
 function manualRefresh() {
   setSyncStatus('syncing', '새로고침 중...');
   DATA_REF.once('value').then((snapshot) => {
@@ -399,11 +439,13 @@ function manualRefresh() {
     if (data) {
       events = Array.isArray(data.events) ? data.events : [];
       todos  = Array.isArray(data.todos)  ? data.todos  : [];
+      buys   = Array.isArray(data.buys)   ? data.buys   : [];
       if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) slots = data.slots;
       document.getElementById('quickMemo').value = data.quickMemo || '';
+      updateQuickChar();
       renderSlot();
     }
-    render(); renderTodos();
+    render(); renderTodos(); renderBuys();
     setSyncStatus('ok', '실시간 동기화 중');
   }).catch(() => {
     setSyncStatus('err', '연결 실패');
@@ -415,6 +457,7 @@ function saveLocal() {
   try {
     localStorage.setItem('yoonho_v2', JSON.stringify(events));
     localStorage.setItem('yoonho_todos', JSON.stringify(todos));
+    localStorage.setItem('yoonho_buys', JSON.stringify(buys));
     localStorage.setItem('yoonho_slots', JSON.stringify(slots));
     localStorage.setItem('yoonho_quickMemo', document.getElementById('quickMemo').value);
   } catch(e) {}
@@ -423,12 +466,14 @@ function saveLocal() {
 function loadLocal() {
   try { events = JSON.parse(localStorage.getItem('yoonho_v2') || '[]'); } catch(e) {}
   try { todos  = JSON.parse(localStorage.getItem('yoonho_todos') || '[]'); } catch(e) {}
+  try { buys   = JSON.parse(localStorage.getItem('yoonho_buys') || '[]'); } catch(e) {}
   try {
     const s = JSON.parse(localStorage.getItem('yoonho_slots'));
     if (Array.isArray(s) && s.length === SLOT_COUNT) slots = s;
   } catch(e) {}
   document.getElementById('quickMemo').value = localStorage.getItem('yoonho_quickMemo') || '';
-  render(); renderSlot(); renderTodos();
+  updateQuickChar();
+  render(); renderSlot(); renderTodos(); renderBuys();
 }
 
 // ── 슬롯 ──
@@ -472,6 +517,26 @@ function addTodo() {
 function toggleTodo(i) { todos[i].done = !todos[i].done; renderTodos(); scheduleSync(); }
 function delTodo(i) { todos.splice(i,1); renderTodos(); scheduleSync(); }
 function todoKey(e) { if(e.key==='Enter') addTodo(); }
+
+// ── Buy list ──
+function renderBuys() {
+  document.getElementById('buyList').innerHTML = buys.map((b,i) =>
+    `<li class="todo-item">
+      <input type="checkbox" class="buy-accent" ${b.done?'checked':''} onchange="toggleBuy(${i})" />
+      <span class="${b.done?'done':''}" onclick="toggleBuy(${i})">${b.text}</span>
+      <button class="del-todo" onclick="delBuy(${i})">✕</button>
+    </li>`
+  ).join('');
+}
+function addBuy() {
+  const inp = document.getElementById('buyInput');
+  const text = inp.value.trim(); if (!text) return;
+  buys.push({ text, done: false });
+  renderBuys(); inp.value = ''; scheduleSync();
+}
+function toggleBuy(i) { buys[i].done = !buys[i].done; renderBuys(); scheduleSync(); }
+function delBuy(i) { buys.splice(i,1); renderBuys(); scheduleSync(); }
+function buyKey(e) { if(e.key==='Enter') addBuy(); }
 
 // ── 캘린더 ──
 function todayStr() {
