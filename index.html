@@ -392,32 +392,70 @@
   html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #3b455d; }
 
   @media (max-width: 640px) {
-    .app { margin-top: 14px; }
-    .header { padding: 18px; align-items: flex-start; gap: 14px; flex-direction: column; }
+    body { overflow-x: hidden; }
+    .app { width: 100%; margin: 0; padding: 0 8px 28px; }
+    .sync-bar { border-radius: 0 0 10px 10px; margin-bottom: 8px; padding: 7px 10px; }
+    .sync-time { display: none; }
+    .btn-sync { padding: 4px 8px; }
+    .header { padding: 14px; align-items: flex-start; gap: 10px; flex-direction: column; border-radius: 12px 12px 0 0; }
+    .header-title { font-size: 1.05rem; }
+    .header-sub { font-size: .68rem; }
     .nav-wrap { width: 100%; justify-content: space-between; gap: 8px; }
     .month-label { flex: 1; min-width: 0; }
+    .nav-btn, .theme-toggle { width: 32px; height: 32px; min-width: 32px; }
     .theme-toggle { flex-shrink: 0; }
-    .day { min-height: 82px; padding: 4px; }
-    .event-badge { padding: 2px 4px; }
+    .legend { padding: 8px 10px; gap: 7px 10px; }
+    .legend-item { font-size: .66rem; }
+    .legend-dot { width: 9px; height: 9px; }
+    .today-dashboard { padding: 10px; }
+    .dashboard-grid { gap: 7px; }
+    .dashboard-card { padding: 9px; }
+    .dashboard-label { font-size: .62rem; }
+    .dashboard-value { font-size: .8rem; }
+    .dashboard-sub { font-size: .59rem; }
+    .important-strip { padding: 8px 10px; }
+    .calendar { border-radius: 0 0 12px 12px; }
+    .weekday { padding: 8px 0; font-size: .65rem; }
+    .day { min-height: clamp(68px,19vw,82px); padding: 3px; }
+    .day-num { width: 22px; height: 22px; font-size: .7rem; }
+    .events { margin-top: 1px; }
+    .event-badge { padding: 2px 3px; font-size: .56rem; border-radius: 3px; }
     .memo-row { grid-template-columns: 1fr; }
+    .memo-section { margin-top: 18px; }
+    .memo-main, .memo-quick-full, .memo-sub { padding: 14px; }
+    .memo-main textarea, .memo-quick-full textarea { height: 110px; }
     .summary-grid { grid-template-columns: 1fr 1fr; }
+    .ledger-summary { padding: 10px; }
     .summary-card { padding: 10px; }
     .summary-value { font-size: .88rem; }
     .mode-switch { width: 100%; }
     .mode-btn { flex: 1; }
     .header-left { width: 100%; }
+    .bottom { margin-top: 12px; }
+    .btn-add { padding: 11px 25px; }
     .ledger-actions { width: 100%; }
     .btn-money { flex: 1; padding: 11px 14px; }
-    .money-badge { font-size: .6rem; padding: 2px 3px; }
+    .money-badge { font-size: .55rem; padding: 2px; }
     .day.has-expense-summary { padding-bottom: 26px; }
     .schedule-expense-summary { left: 3px; right: 3px; bottom: 3px; min-height: 18px; padding: 1px 4px; font-size: .59rem; }
     .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    .feature-panel { margin-top: 10px; padding: 14px; border-radius: 11px; }
+    .panel-head { align-items: flex-start; margin-bottom: 10px; }
+    .panel-title { font-size: .84rem; }
+    .panel-hint { font-size: .63rem; }
     .diet-form { grid-template-columns: 1fr 1fr; }
     .diet-form .mini-field:last-of-type { grid-column: 1 / -1; }
     .mini-save { grid-column: 1 / -1; }
     .stats-overview, .diet-stats { grid-template-columns: 1fr; }
     .category-bar-row { grid-template-columns: 72px 1fr 70px; }
+    .fixed-item { grid-template-columns: 1fr auto; }
+    .fixed-item > div:last-child { grid-column: 1 / -1; text-align: right; }
     .repeat-row { grid-template-columns: 1fr; }
+    .overlay { align-items: flex-end; padding: 0; }
+    .modal, .detail-modal { width: 100%; max-width: none; max-height: 92dvh; border-radius: 18px 18px 0 0; }
+    .modal { padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
+    .detail-body { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .modal input, .modal select, .modal textarea, .mini-field input, .todo-input-row input { font-size: 16px; }
   }
 </style>
 <script>
