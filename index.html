@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260816">
+<link rel="stylesheet" href="./css/styles.css?v=20260817">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -33,7 +33,18 @@
 
   <div class="header">
     <div class="header-left">
-      <div class="header-title">&#128197; 윤호의 스케줄표</div>
+      <div class="header-title-row">
+        <div class="header-title">&#128197; 윤호의 스케줄표</div>
+        <nav class="social-links" aria-label="윤호의 SNS 링크">
+          <a class="social-link social-link-naver" href="https://blog.naver.com/keemyoonho" target="_blank" rel="noopener noreferrer" aria-label="네이버 블로그 열기" title="네이버 블로그">N</a>
+          <a class="social-link" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram 열기" title="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle class="social-icon-fill" cx="17.4" cy="6.7" r="1.15"/></svg>
+          </a>
+          <a class="social-link" href="https://x.com/home" target="_blank" rel="noopener noreferrer" aria-label="X 열기" title="X (Twitter)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="social-icon-fill" d="M18.9 2.8h3.5l-7.7 8.8 9 11.6h-7.1l-5.5-7.1-6.2 7.1H1.4l8.1-9.3L.8 2.8h7.2l5 6.5 5.9-6.5Zm-1.2 18.4h1.9L7 4.7H5L17.7 21.2Z"/></svg>
+          </a>
+        </nav>
+      </div>
       <div class="header-sub">Yoonho's Personal Schedule</div>
       <div class="mode-switch" role="tablist" aria-label="캘린더 모드 선택">
         <button class="mode-btn active" id="scheduleModeBtn" type="button" role="tab" aria-selected="true" onclick="setViewMode('schedule')">&#128197; 일정</button>
