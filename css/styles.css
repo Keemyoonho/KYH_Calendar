@@ -12,7 +12,15 @@
   .btn-sync { background: none; border: 1.5px solid #667eea; color: #667eea; border-radius: 6px; padding: 4px 12px; font-size: 0.75rem; cursor: pointer; font-weight: 600; transition: background .15s; }
   .btn-sync:hover { background: #eef2ff; }
   .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 16px 16px 0 0; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header-title-row { display: flex; align-items: center; gap: 10px; }
   .header-title { font-size: 1.3rem; font-weight: 800; }
+  .social-links { display: inline-flex; align-items: center; gap: 5px; }
+  .social-link { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.28); border-radius: 8px; text-decoration: none; opacity: .9; transition: background .15s, opacity .15s, transform .15s; }
+  .social-link:hover { background: rgba(255,255,255,.28); opacity: 1; transform: translateY(-1px); }
+  .social-link:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+  .social-link svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+  .social-link .social-icon-fill { fill: currentColor; stroke: none; }
+  .social-link-naver { font-size: .75rem; font-weight: 900; font-family: Arial, sans-serif; }
   .header-sub { font-size: 0.78rem; opacity: 0.75; margin-top: 2px; }
   .nav-wrap { display: flex; align-items: center; gap: 12px; }
   .nav-btn { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.1rem; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; transition: background .2s; }
@@ -391,7 +399,10 @@
     .sync-time { display: none; }
     .btn-sync { padding: 4px 8px; }
     .header { padding: 14px; align-items: flex-start; gap: 10px; flex-direction: column; border-radius: 12px 12px 0 0; }
+    .header-title-row { width: 100%; gap: 8px; }
     .header-title { font-size: 1.05rem; }
+    .social-links { margin-left: auto; }
+    .social-link { width: 25px; height: 25px; border-radius: 7px; }
     .header-sub { font-size: .68rem; }
     .nav-wrap { width: 100%; justify-content: space-between; gap: 8px; }
     .month-label { flex: 1; min-width: 0; }
