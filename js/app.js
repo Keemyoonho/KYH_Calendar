@@ -85,7 +85,7 @@ let editSource = null;
 let editTransactionIdx = -1;
 let editFixedExpenseIdx = -1;
 let ledgerDetailDateValue = '';
-let viewMode = localStorage.getItem('yoonho_view_mode') === 'ledger' ? 'ledger' : 'schedule';
+let viewMode = ['ledger','diary'].includes(localStorage.getItem('yoonho_view_mode')) ? localStorage.getItem('yoonho_view_mode') : 'schedule';
 let syncTimer = null;
 let isRemoteUpdate = false;
 
@@ -410,7 +410,7 @@ function buyKey(e) { if(e.key==='Enter'&&!e.isComposing&&e.target.tagName==='INP
 
 // ── 일정 / 가계부 모드 ──
 function setViewMode(mode) {
-  viewMode = mode === 'ledger' ? 'ledger' : 'schedule';
+  viewMode = ['ledger','diary'].includes(mode) ? mode : 'schedule';
   localStorage.setItem('yoonho_view_mode', viewMode);
   updateViewMode();
   render();
@@ -418,17 +418,22 @@ function setViewMode(mode) {
 
 function updateViewMode() {
   const isLedger = viewMode === 'ledger';
+  const isDiary = viewMode === 'diary';
+  document.body.classList.toggle('diary-view',isDiary);
+  document.getElementById('diaryModeBtn').classList.toggle('active',isDiary);
+  document.getElementById('diaryModeBtn').setAttribute('aria-selected',String(isDiary));
   document.body.classList.toggle('ledger-view', isLedger);
-  document.getElementById('scheduleModeBtn').classList.toggle('active', !isLedger);
+  document.getElementById('scheduleModeBtn').classList.toggle('active', !isLedger&&!isDiary);
   document.getElementById('ledgerModeBtn').classList.toggle('active', isLedger);
-  document.getElementById('scheduleModeBtn').setAttribute('aria-selected', String(!isLedger));
+  document.getElementById('scheduleModeBtn').setAttribute('aria-selected', String(!isLedger&&!isDiary));
   document.getElementById('ledgerModeBtn').setAttribute('aria-selected', String(isLedger));
-  document.getElementById('scheduleLegend').style.display = isLedger ? 'none' : 'flex';
+  document.getElementById('scheduleLegend').style.display = isLedger||isDiary ? 'none' : 'flex';
   document.getElementById('ledgerLegend').style.display = isLedger ? 'flex' : 'none';
   document.getElementById('ledgerSummary').classList.toggle('show', isLedger);
   document.getElementById('ledgerActions').classList.toggle('show', isLedger);
   document.querySelector('.header-title').innerHTML = isLedger ? '&#128176; 윤호의 가계부' : '&#128197; 윤호의 스케줄표';
   document.querySelector('.header-sub').textContent = isLedger ? "Yoonho's Personal Ledger" : "Yoonho's Personal Schedule";
+  if(isDiary){document.querySelector('.header-title').textContent='📝 윤호의 일기';document.querySelector('.header-sub').textContent="Yoonho's Personal Diary · 이 브라우저에만 저장";}
 }
 
 function formatWon(amount) {
@@ -873,7 +878,11 @@ function render() {
     else if(i>=first+lastDay){day=i-first-lastDay+1;const nm=m===11?1:m+2,ny=m===11?y+1:y;dateStr=`${ny}-${String(nm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;cls+=' other-month';}
     else{day=i-first+1;dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;if(day===today.getDate()&&m===today.getMonth()&&y===today.getFullYear())cls+=' today';}
     let badges='', clickHandler='', expenseFooter='';
-    if(viewMode==='ledger'){
+    if(viewMode==='diary'){
+      const record=diaryRecords[dateStr];
+      if(record&&(record.body||record.mood||record.tasks?.length))badges='<div class="diary-badge">📝 '+escapeHtml(record.mood||'기록')+'</div>';
+      clickHandler=`openDiary('${dateStr}')`;
+    }else if(viewMode==='ledger'){
       const dayTx=getLedgerEntriesForDate(dateStr);
       const income=dayTx.filter(t=>t.type==='income').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       const expense=dayTx.filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0);

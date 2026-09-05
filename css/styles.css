@@ -173,6 +173,17 @@
   /* 가계부 모드 */
   .header-left { display: flex; flex-direction: column; align-items: flex-start; }
   .mode-switch { display: inline-flex; padding: 3px; margin-top: 10px; background: rgba(255,255,255,.16); border-radius: 10px; gap: 2px; }
+  .diary-panel { display: none; }
+  body.diary-view .diary-panel { display: block; }
+  body.diary-view .schedule-extra, body.diary-view .ledger-extra, body.diary-view .memo-section, body.diary-view .monthly-goals, body.diary-view .today-dashboard, body.diary-view .important-strip { display: none; }
+  #diaryEditor h3 { font-size: .9rem; margin: 14px 0 8px; }
+  #diaryEditor .mini-field { margin-top: 12px; }
+  #diaryEditor textarea, #diaryEditor select { width: 100%; border: 1px solid #dce1eb; border-radius: 8px; padding: 10px; font: inherit; font-size: 16px; color: #343a47; background: white; }
+  #diaryEditor textarea { resize: vertical; min-height: 160px; }
+  #diaryEditor .todo-input-row input, #diaryTasks span { min-width: 0; overflow-wrap: anywhere; }
+  .diary-badge { font-size: .75rem; color: #667eea; padding: 4px 0; }
+  html[data-theme="dark"] #diaryEditor textarea, html[data-theme="dark"] #diaryEditor select { color: #e7eaf2; background: #101625; border-color: #35405a; }
+  html[data-theme="dark"] .diary-badge { color: #a5b4ff; }
   .mode-btn { border: none; background: transparent; color: rgba(255,255,255,.72); padding: 6px 13px; border-radius: 8px; font-family: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; transition: background .2s, color .2s, box-shadow .2s; }
   .mode-btn.active { background: white; color: #5d54c7; box-shadow: 0 2px 8px rgba(35,26,100,.18); }
   .ledger-summary { display: none; background: white; padding: 16px 20px; border-bottom: 1px solid #eee; }
