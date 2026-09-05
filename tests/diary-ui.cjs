@@ -13,6 +13,7 @@ const assert=require('node:assert/strict');
     await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/styles.css'),'utf8')});
     await page.addScriptTag({content:`Object.defineProperty(window,'localStorage',{value:{getItem(){return null},setItem(){}}}); window.firebase={initializeApp(){},database(){return {ref(){return {on(){},set(value){window.lastSync=value;return Promise.resolve()}}}}}};`});
     await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/diary.js'),'utf8')});
+    await page.addScriptTag({content:"window.canSync=()=>true;window.startSecurity=()=>document.body.classList.remove('auth-locked');"});
     await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/app.js'),'utf8')});
 
     await page.evaluate(()=>{const memory={};Object.defineProperty(window.localStorage,'setItem',{value:(k,v)=>memory[k]=v});Object.defineProperty(window.localStorage,'getItem',{value:k=>memory[k]||null});});

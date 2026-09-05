@@ -12,6 +12,7 @@ const assert=require('node:assert/strict');
     await page.setContent(html);
     await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/styles.css'),'utf8')});
     await page.addScriptTag({content:`Object.defineProperty(window,'localStorage',{value:{getItem(){return null},setItem(){}}}); window.firebase={initializeApp(){},database(){return {ref(){return {on(){},set(){return Promise.resolve()}}}}}};`});
+    await page.addScriptTag({content:"window.canSync=()=>true;window.startSecurity=()=>document.body.classList.remove('auth-locked');"});
     await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/app.js'),'utf8')});
     assert.equal(await page.getByRole('button',{name:'+ 일정 추가',exact:true}).count(),0);
     await page.locator('#daysGrid .day:not(.other-month)').first().click();

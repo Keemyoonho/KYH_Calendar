@@ -114,8 +114,12 @@ function setSyncStatus(state, msg) {
 }
 
 function startRealtimeSync() {
+  if(!isCalendarOwner())return;
+  const epoch=authEpoch;
+  syncReady=false;DATA_REF.off();
   setSyncStatus('syncing', '연결 중...');
   DATA_REF.on('value', (snapshot) => {
+    if(epoch!==authEpoch||!isCalendarOwner())return;
     const data = snapshot.val();
     isRemoteUpdate = true;
     if (data) {
@@ -147,17 +151,19 @@ function startRealtimeSync() {
     render();
     renderTodos();
     renderBuySlot();
+    syncReady=true;document.body.classList.remove('auth-locked');
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
     saveLocal();
   }, (error) => {
-    setSyncStatus('err', '연결 실패 — 로컬 데이터 사용 중');
-    loadLocal();
+    if(epoch!==authEpoch)return;
+    lockCalendar('데이터 접근이 거부되었거나 연결에 실패했습니다. 본인 전용 Firebase 규칙을 확인해 주세요.');
+    setSyncStatus('err', '접근 차단 — 기존 기록 보존');
   });
 }
 
 function pushToFirebase() {
-  if (isRemoteUpdate) return;
+  if (isRemoteUpdate || !canSync()) return;
   setSyncStatus('syncing', '저장 중...');
   const payload = {
     events,
@@ -183,7 +189,7 @@ function pushToFirebase() {
 }
 
 function scheduleSync() {
-  if (isRemoteUpdate) return;
+  if (isRemoteUpdate || !canSync()) return;
   updateQuickChar();
   saveLocal();
   clearTimeout(syncTimer);
@@ -196,32 +202,12 @@ function updateQuickChar() {
 }
 
 function manualRefresh() {
-  setSyncStatus('syncing', '새로고침 중...');
-  DATA_REF.once('value').then((snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      events = Array.isArray(data.events) ? data.events : [];
-      todos  = Array.isArray(data.todos)  ? data.todos  : [];
-      transactions = Array.isArray(data.transactions) ? data.transactions : [];
-      monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
-      fixedExpenses = Array.isArray(data.fixedExpenses) ? data.fixedExpenses : [];
-      dietRecords = data.dietRecords && typeof data.dietRecords === 'object' ? data.dietRecords : {};
-      buySlots = normalizeBuySlots(data);
-      loadMonthlySections(data);
-      if (curBuySlot >= BUY_SLOT_COUNT) curBuySlot = 0;
-      if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) slots = data.slots;
-      document.getElementById('quickMemo').value = data.quickMemo || '';
-      updateQuickChar();
-      renderSlot();
-    }
-    render(); renderTodos(); renderBuySlot();
-    setSyncStatus('ok', '실시간 동기화 중');
-  }).catch(() => {
-    setSyncStatus('err', '연결 실패');
-  });
+  if(!canSync())return;
+  clearTimeout(syncTimer);startRealtimeSync();
 }
 
 function saveLocal() {
+  if(!canSync())return;
   try {
     localStorage.setItem('yoonho_v2', JSON.stringify(events));
     localStorage.setItem('yoonho_monthly_sections', JSON.stringify({monthlyGoals,monthlyBuyLists,monthlySectionsVersion:1}));
@@ -237,6 +223,7 @@ function saveLocal() {
 }
 
 function loadLocal() {
+  if(!canSync())return;
   try { events = JSON.parse(localStorage.getItem('yoonho_v2') || '[]'); } catch(e) {}
   try { todos  = JSON.parse(localStorage.getItem('yoonho_todos') || '[]'); } catch(e) {}
   try { transactions = JSON.parse(localStorage.getItem('yoonho_transactions') || '[]'); } catch(e) { transactions = []; }
@@ -476,7 +463,7 @@ function eventOccurrencesOn(event,dateStr) {
   const result=[];
   if(occursOn(event,dateStr) && !exceptions[dateStr]) result.push({...event,_originalDate:dateStr});
   for(const [original,change] of Object.entries(exceptions)) {
-    if(change && !change.cancelled && change.date===dateStr && occursOn(event,original))
+    if(isSafeCalendarDate(original) && change && !change.cancelled && change.date===dateStr && occursOn(event,original))
       result.push({...event,...change,_originalDate:original,_changed:true});
   }
   return result;
@@ -610,7 +597,7 @@ function renderDietTracker() {
   const todayRecord=dietRecords[dietSelectedDate]||{};
   const fields=[['dietWeight','weight'],['dietWater','water'],['dietWorkout','workout'],['dietMeal','meal']];
   if(!dietFormDirty) fields.forEach(([id,key])=>{document.getElementById(id).value=todayRecord[key]??'';});
-  const monthRecords=Object.entries(dietRecords).filter(([date])=>date.startsWith(prefix)).sort(([a],[b])=>a.localeCompare(b));
+  const monthRecords=Object.entries(dietRecords).filter(([date])=>isSafeCalendarDate(date)&&date.startsWith(prefix)).sort(([a],[b])=>a.localeCompare(b));
   const weights=monthRecords.filter(([,record])=>Number(record.weight)>0).map(([,record])=>Number(record.weight));
   const workout=monthRecords.reduce((sum,[,record])=>sum+(Number(record.workout)||0),0);
   const waters=monthRecords.filter(([,record])=>record.water!=='' && record.water!=null && Number.isFinite(Number(record.water))).map(([,record])=>Number(record.water));
@@ -672,7 +659,7 @@ function renderFixedExpenses() {
   const list=document.getElementById('fixedExpenseList');
   list.innerHTML=fixedExpenses.length?fixedExpenses.map((item,i)=>{
     const cat=TRANSACTION_CATS.expense[item.category]||TRANSACTION_CATS.expense.fixed;
-    return `<div class="fixed-item"><div class="fixed-main"><div class="fixed-title">${escapeHtml(item.title)}</div><div class="fixed-meta">매월 ${item.day}일 · ${cat.label} · ${PAYMENT_LABELS[item.payment]||'기타'}${item.startDate?` · ${fmtDate(item.startDate)}부터`:''}${item.active?'':' · 일시정지'}</div></div><div class="fixed-amount">−${formatWon(item.amount)}</div><div><button class="small-action" onclick="openFixedExpenseModal(${i})">수정</button> <button class="small-action" onclick="deleteFixedExpense(${i})">삭제</button></div></div>`;
+    return `<div class="fixed-item"><div class="fixed-main"><div class="fixed-title">${escapeHtml(item.title)}</div><div class="fixed-meta">매월 ${Number(item.day)||1}일 · ${cat.label} · ${PAYMENT_LABELS[item.payment]||'기타'}${item.startDate?` · ${fmtDate(item.startDate)}부터`:''}${item.active?'':' · 일시정지'}</div></div><div class="fixed-amount">−${formatWon(item.amount)}</div><div><button class="small-action" onclick="openFixedExpenseModal(${i})">수정</button> <button class="small-action" onclick="deleteFixedExpense(${i})">삭제</button></div></div>`;
   }).join(''):'<div class="panel-hint">등록된 고정비가 없어요.</div>';
 }
 
@@ -772,6 +759,8 @@ function saveTransaction() {
   pushToFirebase();
 }
 
+function safeEventUrl(value){try{const url=new URL(String(value||''));return ['http:','https:'].includes(url.protocol)?url.href:'';}catch(e){return '';}}
+function isSafeCalendarDate(value){return typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value);}
 function escapeHtml(value='') {
   return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 }
@@ -839,7 +828,7 @@ function todayStr() {
   return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 }
 function fmtTime(t) {
-  if (!t) return '';
+  if (!/^\d{2}:\d{2}$/.test(t||'')) return '';
   const [h,m] = t.split(':');
   const hh=+h, ampm=hh>=12?'오후':'오전', hd=hh===0?12:hh>12?hh-12:hh;
   return `${ampm} ${hd}:${m}`;
@@ -891,7 +880,7 @@ function render() {
       clickHandler=`openLedgerDetailModal(event,'${dateStr}')`;
     }else{
       const dayEvts=getEventsForDate(dateStr).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
-      badges=dayEvts.map(e=>{const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' \u26A0':'';const t=e.start?` ${fmtTime(e.start)}`:'';const flags=`${e.pinned?'📌 ':''}${e.repeat&&e.repeat!=='none'?'↻ ':''}`;return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${flags}${e.title}${t}${warn}</div>`;}).join('');
+      badges=dayEvts.map(e=>{const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' \u26A0':'';const t=e.start?` ${fmtTime(e.start)}`:'';const flags=`${e.pinned?'📌 ':''}${e.repeat&&e.repeat!=='none'?'↻ ':''}`;return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${flags}${escapeHtml(e.title)}${t}${warn}</div>`;}).join('');
       const dayExpense=getLedgerEntriesForDate(dateStr).filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       if(dayExpense){cls+=' has-expense-summary';expenseFooter=`<div class="schedule-expense-summary">−${formatWon(dayExpense)}</div>`;}
       clickHandler=`openDetailModal(event,'${dateStr}')`;
@@ -933,6 +922,7 @@ function saveEvent(){
   if(!editOccurrence && repeat==='weekly' && !repeatDays.length){alert('반복할 요일을 하나 이상 선택해 주세요.');return;}
   const repeatEnd=document.getElementById('evtRepeatEnd').value;
   if(!editOccurrence && repeat!=='none' && repeatEnd && repeatEnd<date){alert('반복 종료일은 시작일 이후로 지정해 주세요.');return;}
+  if(ul&&document.getElementById('evtLink').value.trim()&&!safeEventUrl(document.getElementById('evtLink').value)){alert('링크는 http:// 또는 https:// 주소만 사용할 수 있습니다.');return;}
   const obj={title,date,cat:document.getElementById('evtCat').value,memo:document.getElementById('evtMemo').value.trim(),
     start:ut?document.getElementById('evtStart').value:'',end:ut?document.getElementById('evtEnd').value:'',
     deadline:ud?document.getElementById('evtDeadline').value:'',deadlineMemo:ud?document.getElementById('evtDeadlineMemo').value.trim():'',
@@ -965,13 +955,13 @@ function renderDetail(dateStr){
   dayEvts.forEach(e=>{
     const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);
     let timeHtml='';if(e.start){timeHtml=`<div class="evt-time">\u23F0 ${fmtTime(e.start)}`;if(e.end)timeHtml+=` ~ ${fmtTime(e.end)}`;timeHtml+='</div>';}
-    let dlHtml='';if(dl){dlHtml=`<div class="evt-deadline ${dl.cls}">${dl.icon} ${dl.text}${e.deadlineMemo?` — ${e.deadlineMemo}`:''}</div>`;}
-    let linkHtml='';if(e.link){linkHtml=`<div class="evt-link">\u{1F517} <a href="${e.link}" target="_blank" rel="noopener">${e.linkLabel||e.link}</a></div>`;}
+    let dlHtml='';if(dl){dlHtml=`<div class="evt-deadline ${dl.cls}">${dl.icon} ${dl.text}${e.deadlineMemo?` — ${escapeHtml(e.deadlineMemo)}`:''}</div>`;}
+    let linkHtml='';const safeLink=safeEventUrl(e.link);if(safeLink){linkHtml=`<div class="evt-link">\u{1F517} <a href="${escapeHtml(safeLink)}" target="_blank" rel="noopener">${escapeHtml(e.linkLabel||safeLink)}</a></div>`;}
     html+=`<div class="evt-card" style="background:${cat.bg};border-left-color:${cat.border}">
       <div class="evt-card-top"><div><span class="cat-badge" style="background:${cat.color}">${cat.label}</span>${e.repeat&&e.repeat!=='none'?`<span class="repeat-tag">${repeatLabel(e.repeat)}</span>`:''}${e.pinned?'<span class="pin-tag">📌 중요</span>':''}</div>
       <div class="evt-actions">${e.repeat&&e.repeat!=='none'?`<button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}','${e._originalDate}')">이번 회차 수정</button><button class="evt-action-btn" onclick="cancelOccurrence(${e._i},'${e._originalDate}','${dateStr}')">이번 회차 취소</button>`:''}<button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}')">${e.repeat&&e.repeat!=='none'?'전체 수정':'수정'}</button><button class="evt-action-btn" onclick="delEvent(${e._i},'${dateStr}')">${e.repeat&&e.repeat!=='none'?'전체 삭제':'삭제'}</button></div></div>
       ${e.repeat&&e.repeat!=='none'?`<div class="repeat-note">${eventRepeatLabel(events[e._i])}${e._changed?' · 이번 회차 변경됨':''}</div>`:''}
-      <div class="evt-title">${e.title}</div>${timeHtml}${dlHtml}${e.memo?`<div class="evt-memo">\u{1F4CC} ${e.memo}</div>`:''}${linkHtml}
+      <div class="evt-title">${escapeHtml(e.title)}</div>${timeHtml}${dlHtml}${e.memo?`<div class="evt-memo">\u{1F4CC} ${escapeHtml(e.memo)}</div>`:''}${linkHtml}
     </div>`;
   });
   html+=`<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
@@ -990,4 +980,4 @@ function openAddFromDetail(dateStr){closeDetailModal();openAddModal(dateStr);}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAddModal();closeDetailModal();closeTransactionModal();closeLedgerDetailModal();closeFixedExpenseModal();}});
 
-updateThemeButton(); updateViewMode(); render(); startRealtimeSync();
+updateThemeButton(); updateViewMode(); render(); startSecurity();

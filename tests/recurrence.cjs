@@ -16,7 +16,7 @@ const ctx = vm.createContext({
   document:{getElementById:element,querySelectorAll(selector){return selector.includes(':checked')?days.filter(d=>d.checked):days;},addEventListener(){}},
   setTimeout(){},clearTimeout(){},confirm(){return true;},alert(message){throw Error(message);},console
 });
-vm.runInContext(source.replace('updateThemeButton(); updateViewMode(); render(); startRealtimeSync();',''),ctx);
+vm.runInContext(source.replace('updateThemeButton(); updateViewMode(); render(); startSecurity();',''),ctx);
 vm.runInContext('render=()=>{}; renderDetail=()=>{}; saveLocal=()=>{}; pushToFirebase=()=>{};',ctx);
 const run = code=>vm.runInContext(code,ctx);
 test('legacy weekly, multi-day boundaries, monthly/yearly and transactions',()=>{

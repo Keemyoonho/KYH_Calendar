@@ -173,6 +173,10 @@
   /* 가계부 모드 */
   .header-left { display: flex; flex-direction: column; align-items: flex-start; }
   .mode-switch { display: inline-flex; padding: 3px; margin-top: 10px; background: rgba(255,255,255,.16); border-radius: 10px; gap: 2px; }
+  #authGate { max-width: 620px; margin: 40px auto; line-height: 1.8; }
+  #authGate h1 { font-size: 1.3rem; }
+  body:not(.auth-locked) #authGate { display: none; }
+  body.auth-locked .app, body.auth-locked .overlay { display: none !important; }
   .diary-panel { display: none; }
   body.diary-view .diary-panel { display: block; }
   body.diary-view .schedule-extra, body.diary-view .ledger-extra, body.diary-view .memo-section, body.diary-view .monthly-goals, body.diary-view .today-dashboard, body.diary-view .important-strip { display: none; }

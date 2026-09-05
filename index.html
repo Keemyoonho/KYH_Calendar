@@ -13,12 +13,20 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260906-diary">
+<link rel="stylesheet" href="./css/styles.css?v=20260906-security">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
-<body>
+<body class="auth-locked">
+<section id="authGate" class="feature-panel" aria-labelledby="authHeading">
+  <h1 id="authHeading">🔒 윤호의 개인 캘린더</h1>
+  <p id="authMessage" role="status">로그인 설정을 확인하고 있습니다. 기존 기록은 변경하지 않습니다.</p>
+  <button type="button" class="todo-add-btn" onclick="loginCalendar()">Google로 로그인</button>
+  <button type="button" class="goal-edit" onclick="logoutCalendar()">로그아웃 / 계정 변경</button>
+  <p id="authUid" style="overflow-wrap:anywhere;user-select:all"></p>
+</section>
 <div class="app">
   <div class="sync-bar">
     <div class="sync-status">
@@ -27,6 +35,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="sync-time" id="syncTime"></span>
+      <button class="btn-sync" type="button" onclick="logoutCalendar()">로그아웃</button>
       <button class="btn-sync" onclick="manualRefresh()">&#8635; 새로고침</button>
     </div>
   </div>
@@ -390,6 +399,7 @@
 </div>
 
 <script src="./js/diary.js?v=20260906"></script>
-<script src="./js/app.js?v=20260906-diary"></script>
+<script src="./js/security.js?v=20260906"></script>
+<script src="./js/app.js?v=20260906-security"></script>
 </body>
 </html>
