@@ -10,7 +10,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/styles.css'),'utf8')});
    await page.addScriptTag({content:`window.reads=0;window.writes=0;window.localWrites=0;Object.defineProperty(window,'localStorage',{value:{getItem(){return null},setItem(){window.localWrites++}}});window.fakeAuth={currentUser:null,onAuthStateChanged(cb){window.authCb=cb},setPersistence(){return Promise.resolve()},signOut(){return Promise.resolve()}};window.firebase={initializeApp(){},auth(){return window.fakeAuth},database(){return {ref(){return {off(){},on(event,cb,error){window.reads++;window.dataCb=cb;window.dataError=error},set(){window.writes++;return Promise.resolve()}}}}}};`});
    await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/diary.js'),'utf8')});
-   await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/security.js'),'utf8').replace("const OWNER_UID='';",`const OWNER_UID='${configured?'owner':''}';`)});
+   const securitySource=fs.readFileSync(path.join(root,'js/security.js'),'utf8');
+   assert.match(securitySource,/const OWNER_UID='xJ47cL6Qc2dkRJfajERKQ3eBMtw2';/);
+   await page.addScriptTag({content:securitySource.replace(/const OWNER_UID='[^']*';/,`const OWNER_UID='${configured?'owner':''}';`)});
    await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/app.js'),'utf8')});
    await page.evaluate(()=>{authCb(null);pushToFirebase();manualRefresh();});
    assert.equal(await page.evaluate(()=>reads+writes+localWrites),0);

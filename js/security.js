@@ -1,6 +1,6 @@
-// Intentionally empty until the owner supplies their Firebase Authentication UID.
+// Owner UID supplied by the user during authentication setup.
 // This UI check is NOT a replacement for owner-only Realtime Database rules.
-const OWNER_UID='';
+const OWNER_UID='xJ47cL6Qc2dkRJfajERKQ3eBMtw2';
 let syncReady=false,authEpoch=0;
 function isCalendarOwner(){const user=firebase.auth().currentUser;return !!OWNER_UID&&user?.uid===OWNER_UID;}
 function canSync(){return syncReady&&isCalendarOwner();}
