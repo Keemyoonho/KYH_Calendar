@@ -342,7 +342,28 @@ function editMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)return;
 function deleteMonthlyGoal(i){if(!currentMonthlyGoals()[i]||!confirm('이 목표를 삭제할까요?'))return;currentMonthlyGoals().splice(i,1);renderMonthlyGoals();scheduleSync();}
 // ── Buy list 슬롯 ──
 const BUY_CATEGORIES={tech:{icon:'💻',label:'테크'},food:{icon:'🍎',label:'음식'},medicine:{icon:'💊',label:'약품'},other:{icon:'📦',label:'그 외'}};
+let buyEditor=null;
+function buyContext(){return curBuySlot===0?'month:'+currentMonthKey():'slot:'+curBuySlot;}
+function cancelBuyEdit(){
+  buyEditor=null;
+  for(const id of ['buyInput','buyDescription','buyPrice'])document.getElementById(id).value='';
+  document.getElementById('buyCategory').value='other';
+  document.getElementById('buySaveButton').textContent='추가';
+  document.getElementById('buyCancelEdit').hidden=true;
+}
+function editBuy(i){
+  const item=currentBuyList().items[i];if(!item)return;
+  buyEditor={item,context:buyContext()};
+  document.getElementById('buyInput').value=item.text||'';
+  document.getElementById('buyDescription').value=item.description||'';
+  document.getElementById('buyCategory').value=BUY_CATEGORIES[item.category]?item.category:'other';
+  document.getElementById('buyPrice').value=item.price??'';
+  document.getElementById('buySaveButton').textContent='수정 저장';
+  document.getElementById('buyCancelEdit').hidden=false;
+  document.getElementById('buyInput').focus();
+}
 function renderBuySlot() {
+  if(buyEditor&&buyEditor.context!==buyContext())cancelBuyEdit();
   const slot = currentBuyList();
   document.getElementById('buySlotTitle').value = curBuySlot===0?'이 달의 구매 리스트':slot.title || '';
   document.getElementById('buySlotTitle').readOnly=curBuySlot===0;
@@ -354,6 +375,7 @@ function renderBuySlot() {
     `<li class="todo-item">
       <input type="checkbox" class="buy-accent" ${b.done?'checked':''} onchange="toggleBuy(${i})" />
       <div class="buy-item-content"><span class="${b.done?'done':''}" onclick="toggleBuy(${i})"><span role="img" aria-label="${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).label}">${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).icon}</span> ${escapeHtml(b.text)}</span>${b.description?`<div class="buy-item-description">${escapeHtml(b.description)}</div>`:''}${b.price!==''&&b.price!=null&&Number.isFinite(Number(b.price))?`<div class="buy-item-price">${Number(b.price).toLocaleString('ko-KR')}원</div>`:''}</div>
+      <button class="goal-edit" type="button" onclick="editBuy(${i})" aria-label="구매 항목 ${i+1} 수정">수정</button>
       <button class="del-todo" onclick="delBuy(${i})">&#10005;</button>
     </li>`
   ).join('');
@@ -375,8 +397,12 @@ function addBuy() {
   if(!priceInput.reportValidity())return;
   const price=priceInput.value===''?'':Number(priceInput.value);
   const category=document.getElementById('buyCategory').value;
-  currentBuyList().items.push({text,done:false,description:document.getElementById('buyDescription').value.trim(),category:BUY_CATEGORIES[category]?category:'other',price});
-  renderBuySlot(); inp.value = '';document.getElementById('buyDescription').value='';priceInput.value=''; scheduleSync();
+  const fields={text,description:document.getElementById('buyDescription').value.trim(),category:BUY_CATEGORIES[category]?category:'other',price};
+  if(buyEditor){
+    if(buyEditor.context!==buyContext()||!currentBuyList().items.includes(buyEditor.item)){alert('목록이 변경되었습니다. 항목의 수정 버튼을 다시 눌러주세요.');cancelBuyEdit();return;}
+    Object.assign(buyEditor.item,fields);
+  }else currentBuyList().items.push({...fields,done:false});
+  cancelBuyEdit();renderBuySlot();scheduleSync();
 }
 function toggleBuy(i) { currentBuyList().items[i].done = !currentBuyList().items[i].done; renderBuySlot(); scheduleSync(); }
 function delBuy(i) { currentBuyList().items.splice(i,1); renderBuySlot(); scheduleSync(); }

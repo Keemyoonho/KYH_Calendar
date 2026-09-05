@@ -235,7 +235,8 @@
           <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="other" selected>📦 그 외</option></select></div>
           <div class="mini-field buy-description-field"><label for="buyDescription">물품 설명 (선택)</label><input type="text" id="buyDescription" placeholder="예: 검정색, 무소음" /></div>
           <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="number" id="buyPrice" min="0" step="1" max="9007199254740991" placeholder="예: 35000" /></div>
-          <button class="buy-add-btn" type="button" onclick="addBuy()">추가</button>
+          <button class="buy-add-btn" id="buySaveButton" type="button" onclick="addBuy()">추가</button>
+          <button class="goal-edit" id="buyCancelEdit" type="button" onclick="cancelBuyEdit()" hidden>수정 취소</button>
         </div>
         <div class="buy-slot-dots" id="buySlotDots"></div>
       </div>
@@ -376,6 +377,6 @@
   </div>
 </div>
 
-<script src="./js/app.js?v=20260905-buy-details"></script>
+<script src="./js/app.js?v=20260905-buy-edit"></script>
 </body>
 </html>
