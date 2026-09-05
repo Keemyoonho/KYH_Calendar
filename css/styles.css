@@ -253,6 +253,15 @@
   .small-action { border: none; background: #e9edf5; color: #5e6677; border-radius: 6px; padding: 4px 7px; font-size: .68rem; cursor: pointer; }
   .panel-add-btn { border: none; background: #667eea; color: white; border-radius: 8px; padding: 7px 11px; font-family: inherit; font-size: .72rem; font-weight: 800; cursor: pointer; }
   .repeat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  #evtWeekdays { border: 0; margin-top: 12px; min-width: 0; }
+  #evtWeekdays legend { font-size: .82rem; margin-bottom: 7px; }
+  .repeat-weekdays { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+  .modal .repeat-weekdays label { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0; padding: 8px 0; border: 1px solid #a4acc4; border-radius: 8px; cursor: pointer; }
+  .modal .repeat-weekdays input { width: 17px; height: 17px; padding: 0; accent-color: #667eea; }
+  .repeat-weekdays label:has(input:checked) { background: #667eea; color: white; }
+  html[data-theme="dark"] .repeat-weekdays label { color: #e7eaf2; }
+  .evt-actions { flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 640px) { .evt-card-top { flex-wrap: wrap; gap: 8px; } .evt-actions { justify-content: flex-start; } }
   .repeat-note { color: #8c94a4; font-size: .68rem; margin-top: 5px; line-height: 1.45; }
   .repeat-tag, .pin-tag { display: inline-flex; align-items: center; border-radius: 20px; padding: 2px 7px; font-size: .62rem; font-weight: 800; margin-left: 4px; }
   .repeat-tag { background: #e8edff; color: #566fda; }

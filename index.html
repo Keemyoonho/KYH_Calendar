@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260817">
+<link rel="stylesheet" href="./css/styles.css?v=20260905">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -246,6 +246,7 @@
 <div class="overlay" id="addOverlay" onclick="closeAddOutside(event)">
   <div class="modal">
     <h2 id="modalTitle">&#128221; 일정 추가</h2>
+    <p class="repeat-note" id="evtScopeNote" role="status"></p>
     <label>제목</label><input type="text" id="evtTitle" placeholder="일정 제목 입력" />
     <label>날짜</label><input type="date" id="evtDate" />
     <label>카테고리</label>
@@ -272,11 +273,25 @@
       <label>링크 URL</label><input type="url" id="evtLink" placeholder="https://..." />
       <label>링크 이름 <span class="opt-label">(선택)</span></label><input type="text" id="evtLinkLabel" placeholder="예: 과제 제출 페이지" />
     </div>
+    <div id="eventRepeatOptions">
     <div class="repeat-row">
-      <div><label>반복</label><select id="evtRepeat"><option value="none">반복 안 함</option><option value="weekly">매주</option><option value="monthly">매월</option><option value="yearly">매년</option></select></div>
+      <div><label>반복</label><select id="evtRepeat" onchange="updateEventRepeatUI()"><option value="none">반복 안 함</option><option value="weekly">매주</option><option value="monthly">매월</option><option value="yearly">매년</option></select></div>
       <div><label>반복 종료 <span class="opt-label">(선택)</span></label><input type="date" id="evtRepeatEnd" /></div>
     </div>
-    <div class="repeat-note">반복 일정은 시작일을 기준으로 종료일까지 캘린더에 자동 표시됩니다.</div>
+    <fieldset id="evtWeekdays" hidden>
+      <legend>반복 요일 (여러 개 선택)</legend>
+      <div class="repeat-weekdays">
+        <label><input type="checkbox" value="0">일</label>
+        <label><input type="checkbox" value="1">월</label>
+        <label><input type="checkbox" value="2">화</label>
+        <label><input type="checkbox" value="3">수</label>
+        <label><input type="checkbox" value="4">목</label>
+        <label><input type="checkbox" value="5">금</label>
+        <label><input type="checkbox" value="6">토</label>
+      </div>
+    </fieldset>
+    <div class="repeat-note">시작일 이후 선택한 요일마다 표시됩니다. 종료일을 비우면 계속 반복됩니다.</div>
+    </div>
     <div class="check-row"><input type="checkbox" id="evtPinned" /><label for="evtPinned">&#128204; 중요한 일정으로 상단에 고정</label></div>
     <label>메모 <span class="opt-label">(선택)</span></label>
     <textarea id="evtMemo" placeholder="추가 메모"></textarea>
@@ -360,6 +375,6 @@
   </div>
 </div>
 
-<script src="./js/app.js?v=20260816"></script>
+<script src="./js/app.js?v=20260905"></script>
 </body>
 </html>

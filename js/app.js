@@ -76,6 +76,8 @@ let dietRecords = {};
 let cur = new Date();
 let detailDate = '';
 let editIdx = -1;
+let editOccurrence = '';
+let editSource = null;
 let editTransactionIdx = -1;
 let editFixedExpenseIdx = -1;
 let ledgerDetailDateValue = '';
@@ -373,14 +375,37 @@ function occursOn(item, dateStr) {
   if (repeat === 'none') return item.date === dateStr;
   const base = parseLocalDate(item.date), target = parseLocalDate(dateStr);
   const diffDays = Math.round((target-base)/86400000);
-  if (repeat === 'weekly') return diffDays >= 0 && diffDays % 7 === 0;
+  if (repeat === 'weekly') return Array.isArray(item.repeatDays) && item.repeatDays.length
+    ? item.repeatDays.includes(target.getDay()) : diffDays >= 0 && diffDays % 7 === 0;
   if (repeat === 'monthly') return target.getDate() === base.getDate();
   if (repeat === 'yearly') return target.getMonth() === base.getMonth() && target.getDate() === base.getDate();
   return item.date === dateStr;
 }
 
 function getEventsForDate(dateStr) {
-  return events.map((event,i)=>({...event,_i:i})).filter(event=>occursOn(event,dateStr));
+  return events.flatMap((event,i)=>eventOccurrencesOn(event,dateStr).map(e=>({...e,_i:i})));
+}
+
+function eventOccurrencesOn(event,dateStr) {
+  const exceptions=event.exceptions || {};
+  const result=[];
+  if(occursOn(event,dateStr) && !exceptions[dateStr]) result.push({...event,_originalDate:dateStr});
+  for(const [original,change] of Object.entries(exceptions)) {
+    if(change && !change.cancelled && change.date===dateStr && occursOn(event,original))
+      result.push({...event,...change,_originalDate:original,_changed:true});
+  }
+  return result;
+}
+
+function updateEventRepeatUI() {
+  document.getElementById('eventRepeatOptions').hidden=!!editOccurrence;
+  document.getElementById('evtWeekdays').hidden=document.getElementById('evtRepeat').value!=='weekly';
+}
+
+function eventRepeatLabel(event) {
+  if(event.repeat!=='weekly') return repeatLabel(event.repeat);
+  const days=event.repeatDays?.length?event.repeatDays:[parseLocalDate(event.date).getDay()];
+  return '매주 '+days.map(d=>['일','월','화','수','목','금','토'][d]).join('·');
 }
 
 function fixedOccursOn(item, dateStr) {
@@ -416,7 +441,7 @@ function nextOccurrence(item, fromStr=todayStr(), maxDays=730) {
   for(let i=0;i<=maxDays;i++){
     const candidate=new Date(start);candidate.setDate(start.getDate()+i);
     const str=dateString(candidate);
-    if(occursOn(item,str))return str;
+    if(eventOccurrencesOn(item,str).length)return str;
   }
   return '';
 }
@@ -770,18 +795,25 @@ function render() {
 }
 function changeMonth(d){cur.setMonth(cur.getMonth()+d);render();}
 
-function openAddModal(date,idx){
+function openAddModal(date,idx,originalDate=''){
   editIdx=(idx!==undefined)?idx:-1;const isEdit=editIdx>=0;
+  editOccurrence=originalDate;
+  editSource=isEdit?events[editIdx]:null;
   document.getElementById('modalTitle').textContent=isEdit?'\u270F\uFE0F 일정 수정':'\u{1F4DD} 일정 추가';
-  const e=isEdit?events[editIdx]:{};
+  const e=isEdit?(originalDate?{...editSource,date:originalDate,...editSource.exceptions?.[originalDate]}:editSource):{};
+  if(originalDate) document.getElementById('modalTitle').textContent='이번 회차만 수정';
+  document.getElementById('evtScopeNote').textContent=originalDate?'이 회차의 날짜·시간·내용만 변경됩니다.':isEdit&&e.repeat&&e.repeat!=='none'?'반복 일정 전체를 수정합니다. 개별 변경·취소 기록은 유지됩니다.':'';
   document.getElementById('evtTitle').value=e.title||'';document.getElementById('evtDate').value=e.date||date||todayStr();document.getElementById('evtCat').value=e.cat||'school';document.getElementById('evtMemo').value=e.memo||'';
   const ut=!!(e.start);document.getElementById('useTime').checked=ut;document.getElementById('timeFields').style.display=ut?'block':'none';document.getElementById('evtStart').value=e.start||'';document.getElementById('evtEnd').value=e.end||'';
   const ud=!!(e.deadline);document.getElementById('useDeadline').checked=ud;document.getElementById('deadlineFields').style.display=ud?'block':'none';document.getElementById('evtDeadline').value=e.deadline||'';document.getElementById('evtDeadlineMemo').value=e.deadlineMemo||'';
   const ul=!!(e.link);document.getElementById('useLink').checked=ul;document.getElementById('linkFields').style.display=ul?'block':'none';document.getElementById('evtLink').value=e.link||'';document.getElementById('evtLinkLabel').value=e.linkLabel||'';
   document.getElementById('evtRepeat').value=e.repeat||'none';document.getElementById('evtRepeatEnd').value=e.repeatEnd||'';document.getElementById('evtPinned').checked=!!e.pinned;
+  const selected=e.repeatDays?.length?e.repeatDays:[parseLocalDate(e.date||date||todayStr()).getDay()];
+  document.querySelectorAll('#evtWeekdays input').forEach(input=>input.checked=selected.includes(Number(input.value)));
+  updateEventRepeatUI();
   document.getElementById('addOverlay').classList.add('open');setTimeout(()=>document.getElementById('evtTitle').focus(),100);
 }
-function closeAddModal(){document.getElementById('addOverlay').classList.remove('open');editIdx=-1;}
+function closeAddModal(){document.getElementById('addOverlay').classList.remove('open');editIdx=-1;editOccurrence='';editSource=null;}
 function closeAddOutside(e){if(e.target.id==='addOverlay')closeAddModal();}
 
 function saveEvent(){
@@ -789,13 +821,24 @@ function saveEvent(){
   if(!title){document.getElementById('evtTitle').focus();return;}if(!date){document.getElementById('evtDate').focus();return;}
   const ut=document.getElementById('useTime').checked,ud=document.getElementById('useDeadline').checked,ul=document.getElementById('useLink').checked;
   const repeat=document.getElementById('evtRepeat').value;
+  if(editIdx>=0 && events[editIdx]!==editSource){alert('다른 기기에서 일정이 갱신되었습니다. 창을 닫고 다시 수정해 주세요.');return;}
+  const repeatDays=Array.from(document.querySelectorAll('#evtWeekdays input:checked'),input=>Number(input.value));
+  if(!editOccurrence && repeat==='weekly' && !repeatDays.length){alert('반복할 요일을 하나 이상 선택해 주세요.');return;}
+  const repeatEnd=document.getElementById('evtRepeatEnd').value;
+  if(!editOccurrence && repeat!=='none' && repeatEnd && repeatEnd<date){alert('반복 종료일은 시작일 이후로 지정해 주세요.');return;}
   const obj={title,date,cat:document.getElementById('evtCat').value,memo:document.getElementById('evtMemo').value.trim(),
     start:ut?document.getElementById('evtStart').value:'',end:ut?document.getElementById('evtEnd').value:'',
     deadline:ud?document.getElementById('evtDeadline').value:'',deadlineMemo:ud?document.getElementById('evtDeadlineMemo').value.trim():'',
     link:ul?document.getElementById('evtLink').value.trim():'',linkLabel:ul?document.getElementById('evtLinkLabel').value.trim():'',
     repeat,repeatEnd:repeat==='none'?'':document.getElementById('evtRepeatEnd').value,pinned:document.getElementById('evtPinned').checked};
-  if(editIdx>=0)events[editIdx]=obj;else events.push(obj);
-  render();closeAddModal();if(detailDate===date)renderDetail(date);
+  if(editOccurrence){
+    const {repeat:ignoredRepeat,repeatEnd:ignoredEnd,...change}=obj;
+    events[editIdx]={...editSource,exceptions:{...editSource.exceptions,[editOccurrence]:change}};
+  }else{
+    obj.repeatDays=repeat==='weekly'?repeatDays:[];
+    if(editIdx>=0)events[editIdx]={...editSource,...obj};else events.push(obj);
+  }
+  saveLocal();render();closeAddModal();if(detailDate)renderDetail(detailDate);
   pushToFirebase();
 }
 
@@ -819,7 +862,8 @@ function renderDetail(dateStr){
     let linkHtml='';if(e.link){linkHtml=`<div class="evt-link">\u{1F517} <a href="${e.link}" target="_blank" rel="noopener">${e.linkLabel||e.link}</a></div>`;}
     html+=`<div class="evt-card" style="background:${cat.bg};border-left-color:${cat.border}">
       <div class="evt-card-top"><div><span class="cat-badge" style="background:${cat.color}">${cat.label}</span>${e.repeat&&e.repeat!=='none'?`<span class="repeat-tag">${repeatLabel(e.repeat)}</span>`:''}${e.pinned?'<span class="pin-tag">📌 중요</span>':''}</div>
-      <div class="evt-actions"><button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}')">\u270F\uFE0F 수정</button><button class="evt-action-btn" onclick="delEvent(${e._i},'${dateStr}')">\u{1F5D1} 삭제</button></div></div>
+      <div class="evt-actions">${e.repeat&&e.repeat!=='none'?`<button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}','${e._originalDate}')">이번 회차 수정</button><button class="evt-action-btn" onclick="cancelOccurrence(${e._i},'${e._originalDate}','${dateStr}')">이번 회차 취소</button>`:''}<button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}')">${e.repeat&&e.repeat!=='none'?'전체 수정':'수정'}</button><button class="evt-action-btn" onclick="delEvent(${e._i},'${dateStr}')">${e.repeat&&e.repeat!=='none'?'전체 삭제':'삭제'}</button></div></div>
+      ${e.repeat&&e.repeat!=='none'?`<div class="repeat-note">${eventRepeatLabel(events[e._i])}${e._changed?' · 이번 회차 변경됨':''}</div>`:''}
       <div class="evt-title">${e.title}</div>${timeHtml}${dlHtml}${e.memo?`<div class="evt-memo">\u{1F4CC} ${e.memo}</div>`:''}${linkHtml}
     </div>`;
   });
@@ -827,8 +871,14 @@ function renderDetail(dateStr){
   document.getElementById('detailBody').innerHTML=html;
 }
 
-function editEvent(idx,dateStr){closeDetailModal();openAddModal(dateStr,idx);}
-function delEvent(idx,dateStr){if(!confirm('삭제할까요?'))return;events.splice(idx,1);render();renderDetail(dateStr);pushToFirebase();}
+function editEvent(idx,dateStr,originalDate=''){closeDetailModal();openAddModal(dateStr,idx,originalDate);}
+function cancelOccurrence(idx,originalDate,dateStr){
+  if(!confirm('이 회차만 취소할까요? 다른 날짜의 반복 일정은 유지됩니다.'))return;
+  const source=events[idx];
+  source.exceptions={...source.exceptions,[originalDate]:{cancelled:true}};
+  saveLocal();render();renderDetail(dateStr);pushToFirebase();
+}
+function delEvent(idx,dateStr){if(!confirm(events[idx].repeat&&events[idx].repeat!=='none'?'모든 회차와 개별 변경 기록을 삭제할까요?':'삭제할까요?'))return;events.splice(idx,1);saveLocal();render();renderDetail(dateStr);pushToFirebase();}
 function openAddFromDetail(dateStr){closeDetailModal();openAddModal(dateStr);}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAddModal();closeDetailModal();closeTransactionModal();closeLedgerDetailModal();closeFixedExpenseModal();}});
