@@ -100,6 +100,11 @@ const assert=require('node:assert/strict');
       const boxes=await page.locator('#monthlyGoalsList li').evaluateAll(items=>items.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
       if(width===1280){assert.equal(boxes[0].y,boxes[1].y);assert.ok(boxes[1].x>boxes[0].x);}
       assert.ok(boxes.at(-1).y>boxes[0].y);
+      const panels=await page.locator('.memo-row > .memo-sub').evaluateAll(items=>items.map(e=>({width:e.getBoundingClientRect().width,y:e.getBoundingClientRect().y})));
+      const buys=await page.locator('#buyList > li').evaluateAll(items=>items.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
+      if(width===1280){assert.ok(panels[1].width>panels[0].width*1.8);assert.equal(buys[0].y,buys[1].y);assert.ok(buys[1].x>buys[0].x);}
+      else assert.ok(panels[1].y>panels[0].y);
+      assert.equal(await page.locator('#buyList').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
     }
     assert.deepEqual(errors,[]);
     console.log('PASS: monthly goals/buys isolation, migration, empty Firebase lists, legacy preservation, notes, sync payload, responsive themes');

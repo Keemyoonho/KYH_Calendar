@@ -78,7 +78,13 @@
   .memo-quick-full textarea::placeholder { color: #ccc; }
   .memo-quick-footer { display: flex; align-items: center; justify-content: flex-end; margin-top: 10px; border-top: 1px solid #f5f5f5; padding-top: 8px; }
   .memo-quick-char { font-size: 0.72rem; color: #ccc; }
-  .memo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .memo-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,2fr); gap: 14px; }
+  .memo-row > .memo-sub, .memo-row .todo-input-row input { min-width: 0; }
+  .memo-row .todo-item span { min-width: 0; overflow-wrap: anywhere; }
+  #buyList { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  #buyList > .todo-item { flex: 1 1 180px; min-width: 0; max-width: 100%; padding: 9px 10px; border: 1px solid #e3e7ef; border-radius: 9px; }
+  #buyList .del-todo { flex-shrink: 0; }
+  html[data-theme="dark"] #buyList > .todo-item { border-color: #35405a; }
   .memo-sub { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 16px 18px; }
   .memo-sub-label { font-size: 0.78rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
   .todo-list { list-style: none; margin-bottom: 6px; }
