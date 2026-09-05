@@ -216,6 +216,10 @@
   .important-label { color: #8a6b00; font-size: .72rem; font-weight: 900; white-space: nowrap; }
   .important-item { border: 1px solid rgba(196,151,0,.25); background: rgba(255,255,255,.65); color: #715900; border-radius: 8px; padding: 5px 9px; font-family: inherit; font-size: .69rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .feature-panel { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 17px 19px; margin-top: 14px; }
+  .monthly-goals { margin-bottom: 14px; }
+  .monthly-goals textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid #dce1eb; border-radius: 8px; padding: 10px; font: inherit; font-size: 16px; color: #343a47; background: transparent; }
+  .monthly-goals textarea:focus { outline: 2px solid #667eea; outline-offset: 1px; }
+  html[data-theme="dark"] .monthly-goals textarea { color: #e7eaf2; border-color: #35405a; }
   .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
   .panel-title { color: #303644; font-size: .9rem; font-weight: 900; }
   .panel-hint { color: #969dac; font-size: .69rem; }
@@ -437,6 +441,11 @@
     .events { margin-top: 1px; }
     .event-badge { padding: 2px 3px; font-size: .56rem; border-radius: 3px; }
     .memo-row { grid-template-columns: 1fr; }
+    .memo-sub, .todo-input-row input, .buy-slot-title { min-width: 0; }
+    .buy-slot-head { flex-wrap: wrap; }
+    .buy-slot-title { flex-basis: 150px; }
+    .buy-slot-nav { margin-left: auto; }
+    .todo-item span { min-width: 0; overflow-wrap: anywhere; }
     .memo-section { margin-top: 18px; }
     .memo-main, .memo-quick-full, .memo-sub { padding: 14px; }
     .memo-main textarea, .memo-quick-full textarea { height: 110px; }

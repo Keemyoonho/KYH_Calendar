@@ -71,6 +71,8 @@ let events = [];
 let todos  = [];
 let transactions = [];
 let monthlyBudgets = {};
+let monthlyGoals = {};
+let monthlyBuyLists = {};
 let fixedExpenses = [];
 let dietRecords = {};
 let dietSelectedDate = '';
@@ -124,6 +126,7 @@ function startRealtimeSync() {
       fixedExpenses = Array.isArray(data.fixedExpenses) ? data.fixedExpenses : [];
       dietRecords = data.dietRecords && typeof data.dietRecords === 'object' ? data.dietRecords : {};
       buySlots = normalizeBuySlots(data);
+      loadMonthlySections(data);
       if (curBuySlot >= BUY_SLOT_COUNT) curBuySlot = 0;
       if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) slots = data.slots;
       const quickMemoEl = document.getElementById('quickMemo');
@@ -161,6 +164,9 @@ function pushToFirebase() {
     todos,
     transactions,
     monthlyBudgets,
+    monthlyGoals,
+    monthlyBuyLists,
+    monthlySectionsVersion: 1,
     fixedExpenses,
     dietRecords,
     buySlots,
@@ -179,6 +185,7 @@ function pushToFirebase() {
 function scheduleSync() {
   if (isRemoteUpdate) return;
   updateQuickChar();
+  saveLocal();
   clearTimeout(syncTimer);
   syncTimer = setTimeout(pushToFirebase, 1500);
 }
@@ -200,6 +207,7 @@ function manualRefresh() {
       fixedExpenses = Array.isArray(data.fixedExpenses) ? data.fixedExpenses : [];
       dietRecords = data.dietRecords && typeof data.dietRecords === 'object' ? data.dietRecords : {};
       buySlots = normalizeBuySlots(data);
+      loadMonthlySections(data);
       if (curBuySlot >= BUY_SLOT_COUNT) curBuySlot = 0;
       if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) slots = data.slots;
       document.getElementById('quickMemo').value = data.quickMemo || '';
@@ -216,6 +224,7 @@ function manualRefresh() {
 function saveLocal() {
   try {
     localStorage.setItem('yoonho_v2', JSON.stringify(events));
+    localStorage.setItem('yoonho_monthly_sections', JSON.stringify({monthlyGoals,monthlyBuyLists,monthlySectionsVersion:1}));
     localStorage.setItem('yoonho_todos', JSON.stringify(todos));
     localStorage.setItem('yoonho_transactions', JSON.stringify(transactions));
     localStorage.setItem('yoonho_monthly_budgets', JSON.stringify(monthlyBudgets));
@@ -247,6 +256,7 @@ function loadLocal() {
     const s = JSON.parse(localStorage.getItem('yoonho_slots'));
     if (Array.isArray(s) && s.length === SLOT_COUNT) slots = s;
   } catch(e) {}
+  try { loadMonthlySections(JSON.parse(localStorage.getItem('yoonho_monthly_sections') || '{}')); } catch(e) { loadMonthlySections({}); }
   document.getElementById('quickMemo').value = localStorage.getItem('yoonho_quickMemo') || '';
   updateQuickChar();
   render(); renderSlot(); renderTodos(); renderBuySlot();
@@ -279,7 +289,7 @@ function renderTodos() {
   document.getElementById('todoList').innerHTML = todos.map((t,i) =>
     `<li class="todo-item">
       <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${i})" />
-      <span class="${t.done?'done':''}" onclick="toggleTodo(${i})">${t.text}</span>
+      <span class="${t.done?'done':''}" onclick="toggleTodo(${i})">${escapeHtml(t.text)}</span>
       <button class="del-todo" onclick="delTodo(${i})">&#10005;</button>
     </li>`
   ).join('');
@@ -295,17 +305,42 @@ function toggleTodo(i) { todos[i].done = !todos[i].done; renderTodos(); schedule
 function delTodo(i) { todos.splice(i,1); renderTodos(); scheduleSync(); }
 function todoKey(e) { if(e.key==='Enter') addTodo(); }
 
+// 월별 목표와 구매 목록. 기존 첫 슬롯은 실제 현재 달에 한 번만 이어받는다.
+function loadMonthlySections(data) {
+  monthlyGoals=data.monthlyGoals && typeof data.monthlyGoals==='object'?data.monthlyGoals:{};
+  monthlyBuyLists=Object.fromEntries(Object.entries(data.monthlyBuyLists||{}).map(([key,list])=>[key,{title:list.title||'',items:Array.isArray(list.items)?list.items:[]}]));
+  const key=todayStr().slice(0,7);
+  if(!data.monthlySectionsVersion && !Object.prototype.hasOwnProperty.call(data,'monthlyBuyLists') && buySlots[0].items.length) {
+    monthlyBuyLists[key]={title:buySlots[0].title,items:buySlots[0].items.map(item=>({...item}))};
+  }
+}
+function currentBuyList() {
+  if(curBuySlot!==0)return buySlots[curBuySlot];
+  const key=currentMonthKey();
+  if(!monthlyBuyLists[key])monthlyBuyLists[key]={title:'',items:[]};
+  return monthlyBuyLists[key];
+}
+function renderMonthlyGoals() {
+  document.getElementById('monthlyGoalsHint').textContent=currentMonthKey()+' · 자동 저장';
+  document.getElementById('monthlyGoalsInput').value=monthlyGoals[currentMonthKey()]||'';
+}
+function saveMonthlyGoals() {
+  monthlyGoals[currentMonthKey()]=document.getElementById('monthlyGoalsInput').value;
+  scheduleSync();
+}
 // ── Buy list 슬롯 ──
 function renderBuySlot() {
-  const slot = buySlots[curBuySlot];
-  document.getElementById('buySlotTitle').value = slot.title || '';
+  const slot = currentBuyList();
+  document.getElementById('buySlotTitle').value = curBuySlot===0?'이 달의 구매 리스트':slot.title || '';
+  document.getElementById('buySlotTitle').readOnly=curBuySlot===0;
+  document.getElementById('buySlotTitle').title=curBuySlot===0?currentMonthKey()+' 구매 목록':'';
   document.getElementById('buySlotIndicator').textContent = `${curBuySlot+1} / ${BUY_SLOT_COUNT}`;
   document.getElementById('buySlotPrev').disabled = curBuySlot === 0;
   document.getElementById('buySlotNext').disabled = curBuySlot === BUY_SLOT_COUNT-1;
   document.getElementById('buyList').innerHTML = slot.items.map((b,i) =>
     `<li class="todo-item">
       <input type="checkbox" class="buy-accent" ${b.done?'checked':''} onchange="toggleBuy(${i})" />
-      <span class="${b.done?'done':''}" onclick="toggleBuy(${i})">${b.text}</span>
+      <span class="${b.done?'done':''}" onclick="toggleBuy(${i})">${escapeHtml(b.text)}</span>
       <button class="del-todo" onclick="delBuy(${i})">&#10005;</button>
     </li>`
   ).join('');
@@ -314,6 +349,7 @@ function renderBuySlot() {
   ).join('');
 }
 function saveBuySlotTitle() {
+  if(curBuySlot===0)return;
   buySlots[curBuySlot].title = document.getElementById('buySlotTitle').value;
   scheduleSync();
 }
@@ -322,11 +358,11 @@ function goBuySlot(i) { curBuySlot = i; renderBuySlot(); }
 function addBuy() {
   const inp = document.getElementById('buyInput');
   const text = inp.value.trim(); if (!text) return;
-  buySlots[curBuySlot].items.push({ text, done: false });
+  currentBuyList().items.push({ text, done: false });
   renderBuySlot(); inp.value = ''; scheduleSync();
 }
-function toggleBuy(i) { buySlots[curBuySlot].items[i].done = !buySlots[curBuySlot].items[i].done; renderBuySlot(); scheduleSync(); }
-function delBuy(i) { buySlots[curBuySlot].items.splice(i,1); renderBuySlot(); scheduleSync(); }
+function toggleBuy(i) { currentBuyList().items[i].done = !currentBuyList().items[i].done; renderBuySlot(); scheduleSync(); }
+function delBuy(i) { currentBuyList().items.splice(i,1); renderBuySlot(); scheduleSync(); }
 function buyKey(e) { if(e.key==='Enter') addBuy(); }
 
 // ── 일정 / 가계부 모드 ──
@@ -783,6 +819,8 @@ function render() {
   renderLedgerSummary();
   renderDashboard();
   renderDietTracker();
+  renderMonthlyGoals();
+  renderBuySlot();
   renderLedgerStats();
   renderFixedExpenses();
   const first=new Date(y,m,1).getDay(), lastDay=new Date(y,m+1,0).getDate(), prevLast=new Date(y,m,0).getDate();

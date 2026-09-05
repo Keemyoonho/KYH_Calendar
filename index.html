@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260905-diet">
+<link rel="stylesheet" href="./css/styles.css?v=20260905-monthly">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -72,7 +72,7 @@
         <div class="dashboard-sub" id="todayExpenseSub">지출 내역이 없어요</div>
       </div>
       <div class="dashboard-card">
-        <div class="dashboard-label">&#9989; 남은 할 일</div>
+        <div class="dashboard-label">&#9889; 미완료 메모</div>
         <div class="dashboard-value" id="todayTodoValue">0개</div>
         <div class="dashboard-sub" id="todayTodoSub">모두 완료했어요</div>
       </div>
@@ -127,6 +127,10 @@
     </div>
   </section>
 
+  <section class="feature-panel monthly-goals" aria-labelledby="monthlyGoalsTitle">
+    <div class="panel-head"><div><div class="panel-title" id="monthlyGoalsTitle">🎯 이달의 목표</div><div class="panel-hint" id="monthlyGoalsHint">선택한 달의 목표 · 자동 저장</div></div></div>
+    <textarea id="monthlyGoalsInput" aria-label="이달의 목표" placeholder="이번 달에 이루고 싶은 목표를 적어보세요…" oninput="saveMonthlyGoals()"></textarea>
+  </section>
   <div class="calendar">
     <div class="weekdays">
       <div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div>
@@ -202,22 +206,16 @@
       </div>
     </div>
 
-    <!-- 2. 빠른 메모 -->
-    <div class="memo-quick-full">
-      <div class="memo-sub-label">&#9889; 빠른 메모</div>
-      <textarea id="quickMemo" placeholder="빠르게 적어두고 싶은 것들..." oninput="scheduleSync()"></textarea>
-      <div class="memo-quick-footer">
-        <span class="memo-quick-char" id="quickChar">0자</span>
-      </div>
-    </div>
+    <!-- 이전 빠른 메모 데이터는 삭제하지 않고 동기화 호환용으로 보존 -->
+    <textarea id="quickMemo" hidden></textarea><span id="quickChar" hidden></span>
 
     <!-- 3. 할 일 목록 + Buy list (슬롯형, 2열) -->
     <div class="memo-row">
       <div class="memo-sub">
-        <div class="memo-sub-label">&#9989; 할 일 목록</div>
+        <div class="memo-sub-label">&#9889; 빠른 메모</div>
         <ul class="todo-list" id="todoList"></ul>
         <div class="todo-input-row">
-          <input type="text" id="todoInput" placeholder="할 일 추가..." onkeydown="todoKey(event)" />
+          <input type="text" id="todoInput" placeholder="메모 추가..." onkeydown="todoKey(event)" />
           <button class="todo-add-btn" onclick="addTodo()">추가</button>
         </div>
       </div>
@@ -376,6 +374,6 @@
   </div>
 </div>
 
-<script src="./js/app.js?v=20260905-diet"></script>
+<script src="./js/app.js?v=20260905-monthly"></script>
 </body>
 </html>
