@@ -321,13 +321,25 @@ function currentBuyList() {
   return monthlyBuyLists[key];
 }
 function renderMonthlyGoals() {
-  document.getElementById('monthlyGoalsHint').textContent=currentMonthKey()+' · 자동 저장';
-  document.getElementById('monthlyGoalsInput').value=monthlyGoals[currentMonthKey()]||'';
+  const key=currentMonthKey(),items=currentMonthlyGoals();
+  document.getElementById('monthlyGoalsHint').textContent=key+' · 달성한 목표에 체크하세요 · 자동 저장';
+  document.getElementById('monthlyGoalsList').innerHTML=items.map((item,i)=>`<li class="todo-item"><input type="checkbox" aria-label="목표 ${i+1} 달성" ${item.done?'checked':''} onchange="toggleMonthlyGoal(${i})" /><span class="${item.done?'done':''}">${escapeHtml(item.text)}</span><button type="button" class="goal-edit" onclick="editMonthlyGoal(${i})" aria-label="목표 ${i+1} 수정">수정</button><button type="button" class="del-todo" onclick="deleteMonthlyGoal(${i})" aria-label="목표 ${i+1} 삭제">✕</button></li>`).join('');
+  const done=items.filter(item=>item.done).length;
+  document.getElementById('monthlyGoalsProgress').textContent=items.length?`달성 ${done} / ${items.length}개 · 미달성 ${items.length-done}개`:'아직 목표가 없어요. 첫 목표를 추가해 보세요.';
+  const input=document.getElementById('monthlyGoalsInput');
+  if(input.dataset.month!==key){input.value='';input.dataset.month=key;}
 }
-function saveMonthlyGoals() {
-  monthlyGoals[currentMonthKey()]=document.getElementById('monthlyGoalsInput').value;
-  scheduleSync();
+function currentMonthlyGoals() {
+  const key=currentMonthKey(),value=monthlyGoals[key];
+  // 기존 자유형 메모는 원문 전체를 하나의 목표로 보존한다.
+  if(typeof value==='string')monthlyGoals[key]=value.trim()?[{text:value,done:false}]:[];
+  else if(!Array.isArray(value))monthlyGoals[key]=[];
+  return monthlyGoals[key];
 }
+function addMonthlyGoal(){const input=document.getElementById('monthlyGoalsInput'),text=input.value.trim();if(!text)return;currentMonthlyGoals().push({text,done:false});input.value='';renderMonthlyGoals();scheduleSync();}
+function toggleMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)return;item.done=!item.done;renderMonthlyGoals();scheduleSync();}
+function editMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)return;const text=prompt('목표 수정',item.text);if(text===null||!text.trim())return;item.text=text.trim();renderMonthlyGoals();scheduleSync();}
+function deleteMonthlyGoal(i){if(!currentMonthlyGoals()[i]||!confirm('이 목표를 삭제할까요?'))return;currentMonthlyGoals().splice(i,1);renderMonthlyGoals();scheduleSync();}
 // ── Buy list 슬롯 ──
 function renderBuySlot() {
   const slot = currentBuyList();
