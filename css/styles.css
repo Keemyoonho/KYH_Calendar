@@ -217,6 +217,10 @@
   .important-item { border: 1px solid rgba(196,151,0,.25); background: rgba(255,255,255,.65); color: #715900; border-radius: 8px; padding: 5px 9px; font-family: inherit; font-size: .69rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .feature-panel { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 17px 19px; margin-top: 14px; }
   .monthly-goals { margin-bottom: 14px; }
+  #monthlyGoalsList { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+  #monthlyGoalsList .todo-item { flex: 0 1 auto; max-width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid #e3e7ef; border-radius: 9px; }
+  #monthlyGoalsList .del-todo { flex-shrink: 0; }
+  html[data-theme="dark"] #monthlyGoalsList .todo-item { border-color: #35405a; }
   .monthly-goals .todo-input-row input { min-width: 0; }
   .monthly-goals .todo-item span { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; cursor: default; }
   .goal-edit { border: none; background: transparent; color: #667eea; cursor: pointer; flex-shrink: 0; }

@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260905-goals">
+<link rel="stylesheet" href="./css/styles.css?v=20260905-goals-wrap">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -127,12 +127,6 @@
     </div>
   </section>
 
-  <section class="feature-panel monthly-goals" aria-labelledby="monthlyGoalsTitle">
-    <div class="panel-head"><div><div class="panel-title" id="monthlyGoalsTitle">🎯 이달의 목표</div><div class="panel-hint" id="monthlyGoalsHint">선택한 달의 목표 · 자동 저장</div></div></div>
-    <ul class="todo-list" id="monthlyGoalsList" aria-label="이달의 목표 목록"></ul>
-    <div class="todo-input-row"><input id="monthlyGoalsInput" aria-label="새 목표" placeholder="이번 달 목표 추가…" onkeydown="if(event.key==='Enter'&&!event.isComposing)addMonthlyGoal()" /><button class="todo-add-btn" type="button" onclick="addMonthlyGoal()">추가</button></div>
-    <div class="panel-hint" id="monthlyGoalsProgress" role="status"></div>
-  </section>
   <div class="calendar">
     <div class="weekdays">
       <div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div>
@@ -140,6 +134,13 @@
     </div>
     <div class="days" id="daysGrid"></div>
   </div>
+
+  <section class="feature-panel monthly-goals" aria-labelledby="monthlyGoalsTitle">
+    <div class="panel-head"><div><div class="panel-title" id="monthlyGoalsTitle">🎯 이달의 목표</div><div class="panel-hint" id="monthlyGoalsHint">선택한 달의 목표 · 자동 저장</div></div></div>
+    <ul class="todo-list" id="monthlyGoalsList" aria-label="이달의 목표 목록"></ul>
+    <div class="todo-input-row"><input id="monthlyGoalsInput" aria-label="새 목표" placeholder="이번 달 목표 추가…" onkeydown="if(event.key==='Enter'&&!event.isComposing)addMonthlyGoal()" /><button class="todo-add-btn" type="button" onclick="addMonthlyGoal()">추가</button></div>
+    <div class="panel-hint" id="monthlyGoalsProgress" role="status"></div>
+  </section>
 
   <div class="bottom" id="scheduleActions">
     <button class="btn-add" onclick="openAddModal()">+ 일정 추가</button>

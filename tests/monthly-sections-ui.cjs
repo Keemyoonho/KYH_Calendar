@@ -68,10 +68,16 @@ const assert=require('node:assert/strict');
     assert.equal(await page.locator('#buyList li').count(),0);
     await page.evaluate(()=>{loadMonthlySections({monthlySectionsVersion:1,monthlyBuyLists:{[currentMonthKey()]:{title:'빈 목록'}}});renderBuySlot();});
     assert.equal(await page.locator('#buyList li').count(),0);
+    await page.evaluate(()=>{monthlyGoals[currentMonthKey()]=Array.from({length:12},(_,i)=>({text:'목표 '+i,done:false}));monthlyGoals[currentMonthKey()].push({text:'긴목표'.repeat(100),done:false});renderMonthlyGoals();});
     for(const width of [1280,390,320])for(const theme of ['light','dark']){
       await page.setViewportSize({width,height:850});
       await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
       for(const selector of ['.monthly-goals','.memo-row'])assert.equal(await page.locator(selector).evaluate(e=>e.scrollWidth<=e.clientWidth),true,`${selector} ${width} ${theme}`);
+      const calendar=await page.locator('.calendar').boundingBox(),goals=await page.locator('.monthly-goals').boundingBox();
+      assert.ok(goals.y>=calendar.y+calendar.height);
+      const boxes=await page.locator('#monthlyGoalsList li').evaluateAll(items=>items.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
+      if(width===1280){assert.equal(boxes[0].y,boxes[1].y);assert.ok(boxes[1].x>boxes[0].x);}
+      assert.ok(boxes.at(-1).y>boxes[0].y);
     }
     assert.deepEqual(errors,[]);
     console.log('PASS: monthly goals/buys isolation, migration, empty Firebase lists, legacy preservation, notes, sync payload, responsive themes');
