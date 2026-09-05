@@ -231,8 +231,11 @@
   .diet-stat { background: #f1fbf8; border-radius: 9px; padding: 9px 11px; }
   .diet-stat-label { color: #6b9187; font-size: .64rem; font-weight: 700; }
   .diet-stat-value { color: #087b68; font-size: .86rem; font-weight: 900; margin-top: 3px; }
-  .diet-recent { margin-top: 10px; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-  .diet-day { min-width: 94px; background: #f7f8fb; border: 1px solid #eceff4; border-radius: 8px; padding: 7px 8px; font-size: .66rem; color: #747c8d; line-height: 1.55; }
+  .diet-date { max-width: 200px; margin-bottom: 10px; }
+  .diet-recent { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill,minmax(110px,1fr)); gap: 6px; }
+  .diet-day { min-width: 0; background: #f7f8fb; border: 1px solid #eceff4; border-radius: 8px; padding: 7px 8px; font: inherit; font-size: .66rem; color: #747c8d; line-height: 1.55; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+  .diet-day.selected { outline: 2px solid #16a085; outline-offset: -2px; }
+  .diet-day:focus-visible { outline: 2px solid #16a085; outline-offset: 2px; }
   .diet-day strong { display: block; color: #343a47; margin-bottom: 2px; }
   .stats-overview { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 13px; }
   .stats-metric { background: #f7f8fc; border-radius: 9px; padding: 10px 11px; }

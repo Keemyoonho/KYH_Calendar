@@ -73,6 +73,8 @@ let transactions = [];
 let monthlyBudgets = {};
 let fixedExpenses = [];
 let dietRecords = {};
+let dietSelectedDate = '';
+let dietFormDirty = false;
 let cur = new Date();
 let detailDate = '';
 let editIdx = -1;
@@ -515,35 +517,51 @@ function renderDashboard() {
 function openPinnedEvent(dateStr){openDetailModal({stopPropagation(){}},dateStr);}
 
 function renderDietTracker() {
-  const today=todayStr();
-  const todayRecord=dietRecords[today]||{};
-  const fields=[['dietWeight','weight'],['dietWater','water'],['dietWorkout','workout'],['dietMeal','meal']];
-  fields.forEach(([id,key])=>{const el=document.getElementById(id);if(document.activeElement!==el)el.value=todayRecord[key]??'';});
   const prefix=currentMonthKey();
+  if(!dietSelectedDate.startsWith(prefix+'-')) {
+    dietSelectedDate=todayStr().startsWith(prefix+'-')?todayStr():prefix+'-01';
+    dietFormDirty=false;
+  }
+  document.getElementById('dietTrackerTitle').textContent=`🥗 ${cur.getFullYear()}년 ${cur.getMonth()+1}월 다이어트 기록`;
+  document.getElementById('dietDate').value=dietSelectedDate;
+  const todayRecord=dietRecords[dietSelectedDate]||{};
+  const fields=[['dietWeight','weight'],['dietWater','water'],['dietWorkout','workout'],['dietMeal','meal']];
+  if(!dietFormDirty) fields.forEach(([id,key])=>{document.getElementById(id).value=todayRecord[key]??'';});
   const monthRecords=Object.entries(dietRecords).filter(([date])=>date.startsWith(prefix)).sort(([a],[b])=>a.localeCompare(b));
   const weights=monthRecords.filter(([,record])=>Number(record.weight)>0).map(([,record])=>Number(record.weight));
   const workout=monthRecords.reduce((sum,[,record])=>sum+(Number(record.workout)||0),0);
-  const waters=monthRecords.filter(([,record])=>Number(record.water)>0).map(([,record])=>Number(record.water));
+  const waters=monthRecords.filter(([,record])=>record.water!=='' && record.water!=null && Number.isFinite(Number(record.water))).map(([,record])=>Number(record.water));
   document.getElementById('dietWeightChange').textContent=weights.length>=2 ? `${weights.at(-1)-weights[0]>=0?'+':''}${(weights.at(-1)-weights[0]).toFixed(1)}kg` : (weights.length?'기준 기록 1개':'기록 없음');
   document.getElementById('dietWorkoutTotal').textContent=`${workout.toLocaleString('ko-KR')}분`;
   document.getElementById('dietWaterAverage').textContent=waters.length?`${(waters.reduce((a,b)=>a+b,0)/waters.length).toFixed(1)}잔`:'0잔';
-  const recent=Object.entries(dietRecords).sort(([a],[b])=>b.localeCompare(a)).slice(0,7);
+  const recent=[...monthRecords].reverse();
   document.getElementById('dietRecent').innerHTML=recent.length?recent.map(([date,record])=>
-    `<div class="diet-day"><strong>${fmtDate(date)}</strong>${record.weight?`⚖️ ${record.weight}kg<br>`:''}${record.water?`💧 ${record.water}잔<br>`:''}${record.workout?`🏃 ${record.workout}분<br>`:''}${record.meal?`🥗 ${escapeHtml(record.meal)}`:''}</div>`
-  ).join(''):'<div class="panel-hint">아직 저장된 다이어트 기록이 없어요.</div>';
+    `<button type="button" class="diet-day${date===dietSelectedDate?' selected':''}" onclick="selectDietDate('${date}')" aria-label="${date} 기록 수정" aria-pressed="${date===dietSelectedDate}"><strong>${fmtDate(date)}</strong>${record.weight?`⚖️ ${Number(record.weight)}kg<br>`:''}${record.water!==''&&record.water!=null?`💧 ${Number(record.water)}잔<br>`:''}${record.workout!==''&&record.workout!=null?`🏃 ${Number(record.workout)}분<br>`:''}${record.meal?`🥗 ${escapeHtml(record.meal)}`:''}</button>`
+  ).join(''):'<div class="panel-hint">선택한 달에 저장된 기록이 없어요. 날짜를 골라 첫 기록을 남겨보세요.</div>';
+}
+
+function selectDietDate(date) {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || dateString(parseLocalDate(date))!==date){document.getElementById('dietDate').value=dietSelectedDate;return;}
+  if(dietFormDirty && !confirm('저장하지 않은 입력을 버리고 다른 날짜로 이동할까요?')){document.getElementById('dietDate').value=dietSelectedDate;return;}
+  dietSelectedDate=date;dietFormDirty=false;
+  if(!date.startsWith(currentMonthKey()+'-')) {cur=parseLocalDate(date);cur.setDate(1);render();}
+  else renderDietTracker();
 }
 
 function saveDietRecord() {
-  const date=todayStr();
+  const date=dietSelectedDate;
+  if(!date || document.getElementById('dietDate').value!==date)return;
+  for(const id of ['dietWeight','dietWater','dietWorkout'])if(!document.getElementById(id).reportValidity())return;
+  const numberValue=id=>document.getElementById(id).value===''?'':Number(document.getElementById(id).value);
   const record={
-    weight:Number(document.getElementById('dietWeight').value)||'',
-    water:Number(document.getElementById('dietWater').value)||'',
-    workout:Number(document.getElementById('dietWorkout').value)||'',
+    weight:numberValue('dietWeight'),
+    water:numberValue('dietWater'),
+    workout:numberValue('dietWorkout'),
     meal:document.getElementById('dietMeal').value.trim(),
   };
-  if(record.weight||record.water||record.workout||record.meal)dietRecords[date]=record;
-  else delete dietRecords[date];
-  renderDietTracker();renderDashboard();pushToFirebase();
+  if(Object.values(record).some(value=>value!==''))dietRecords[date]=record;
+  else {if(dietRecords[date]&&!confirm('입력이 비어 있습니다. 선택한 날짜의 기록을 삭제할까요?'))return;delete dietRecords[date];}
+  dietFormDirty=false;saveLocal();renderDietTracker();renderDashboard();pushToFirebase();
 }
 
 function renderLedgerStats() {
@@ -793,7 +811,7 @@ function render() {
   }
   document.getElementById('daysGrid').innerHTML=html;
 }
-function changeMonth(d){cur.setMonth(cur.getMonth()+d);render();}
+function changeMonth(d){if(dietFormDirty&&!confirm('저장하지 않은 다이어트 입력을 버리고 다른 달로 이동할까요?'))return;cur.setDate(1);cur.setMonth(cur.getMonth()+d);render();}
 
 function openAddModal(date,idx,originalDate=''){
   editIdx=(idx!==undefined)?idx:-1;const isEdit=editIdx>=0;

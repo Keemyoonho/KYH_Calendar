@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260905">
+<link rel="stylesheet" href="./css/styles.css?v=20260905-diet">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -146,9 +146,10 @@
 
   <section class="feature-panel schedule-extra" id="dietTracker">
     <div class="panel-head">
-      <div><div class="panel-title">&#129367; 오늘의 다이어트 기록</div><div class="panel-hint">체중·물·운동·식단을 날짜별로 저장합니다</div></div>
+      <div><div class="panel-title" id="dietTrackerTitle">&#129367; 월별 다이어트 기록</div><div class="panel-hint">달력에서 선택한 달의 기록입니다. 날짜나 기록 카드를 선택해 입력·수정하세요.</div></div>
     </div>
-    <div class="diet-form">
+    <div class="mini-field diet-date"><label for="dietDate">기록 날짜</label><input id="dietDate" type="date" onchange="selectDietDate(this.value)" /></div>
+    <div class="diet-form" oninput="dietFormDirty=true">
       <div class="mini-field"><label for="dietWeight">체중 (kg)</label><input id="dietWeight" type="number" min="0" step="0.1" placeholder="예: 72.5" /></div>
       <div class="mini-field"><label for="dietWater">물 (잔)</label><input id="dietWater" type="number" min="0" step="1" placeholder="예: 8" /></div>
       <div class="mini-field"><label for="dietWorkout">운동 (분)</label><input id="dietWorkout" type="number" min="0" step="1" placeholder="예: 45" /></div>
@@ -156,8 +157,8 @@
       <button class="mini-save" type="button" onclick="saveDietRecord()">기록 저장</button>
     </div>
     <div class="diet-stats">
-      <div class="diet-stat"><div class="diet-stat-label">이번 달 체중 변화</div><div class="diet-stat-value" id="dietWeightChange">기록 없음</div></div>
-      <div class="diet-stat"><div class="diet-stat-label">이번 달 운동</div><div class="diet-stat-value" id="dietWorkoutTotal">0분</div></div>
+      <div class="diet-stat"><div class="diet-stat-label">선택한 달 체중 변화</div><div class="diet-stat-value" id="dietWeightChange">기록 없음</div></div>
+      <div class="diet-stat"><div class="diet-stat-label">선택한 달 운동</div><div class="diet-stat-value" id="dietWorkoutTotal">0분</div></div>
       <div class="diet-stat"><div class="diet-stat-label">평균 물 섭취</div><div class="diet-stat-value" id="dietWaterAverage">0잔</div></div>
     </div>
     <div class="diet-recent" id="dietRecent"></div>
@@ -375,6 +376,6 @@
   </div>
 </div>
 
-<script src="./js/app.js?v=20260905"></script>
+<script src="./js/app.js?v=20260905-diet"></script>
 </body>
 </html>
