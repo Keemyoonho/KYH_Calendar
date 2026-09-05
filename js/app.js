@@ -395,7 +395,6 @@ function updateViewMode() {
   document.getElementById('scheduleLegend').style.display = isLedger ? 'none' : 'flex';
   document.getElementById('ledgerLegend').style.display = isLedger ? 'flex' : 'none';
   document.getElementById('ledgerSummary').classList.toggle('show', isLedger);
-  document.getElementById('scheduleActions').style.display = isLedger ? 'none' : 'flex';
   document.getElementById('ledgerActions').classList.toggle('show', isLedger);
   document.querySelector('.header-title').innerHTML = isLedger ? '&#128176; 윤호의 가계부' : '&#128197; 윤호의 스케줄표';
   document.querySelector('.header-sub').textContent = isLedger ? "Yoonho's Personal Ledger" : "Yoonho's Personal Schedule";
