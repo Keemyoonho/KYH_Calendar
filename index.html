@@ -146,7 +146,9 @@
   </div>
 
   <section class="feature-panel diary-panel" id="diaryPanel" aria-labelledby="diaryHeading">
-    <div class="panel-head"><div><div class="panel-title" id="diaryHeading">📝 날짜를 눌러 하루를 기록하세요</div><div class="panel-hint">이 브라우저에만 저장됩니다. 다른 기기와 동기화되지 않으며, 브라우저 데이터 삭제 시 사라집니다. 공용 기기에서는 작성하지 마세요.</div></div></div>
+    <div class="panel-head"><div><div class="panel-title" id="diaryHeading">📝 날짜를 눌러 하루를 기록하세요</div><div class="panel-hint" id="diaryCloudStatus">본인 계정으로 저장·동기화합니다. ‘서버 저장 완료’를 확인한 뒤 브라우저 데이터를 삭제해 주세요.</div></div></div>
+    <button type="button" class="goal-edit" onclick="retryDiary()">저장 재시도</button>
+    <details><summary>기존·동시 수정 일기 원본 보관함</summary><div id="diaryImports"></div></details>
     <div id="diaryEditor" hidden>
       <div class="panel-hint" id="diarySchedule"></div>
       <div class="mini-field"><label for="diaryMood">오늘의 기분</label><select id="diaryMood" onchange="saveDiary()"><option value="">선택 안 함</option><option value="😊">😊 좋음</option><option value="😐">😐 보통</option><option value="😔">😔 아쉬움</option><option value="😴">😴 피곤함</option></select></div>
@@ -398,8 +400,8 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20260906"></script>
-<script src="./js/security.js?v=20260906-owner"></script>
-<script src="./js/app.js?v=20260906-security"></script>
+<script src="./js/diary.js?v=20260906-cloud"></script>
+<script src="./js/security.js?v=20260906-diary-cloud"></script>
+<script src="./js/app.js?v=20260906-diary-cloud"></script>
 </body>
 </html>

@@ -152,6 +152,7 @@ function startRealtimeSync() {
     renderTodos();
     renderBuySlot();
     syncReady=true;document.body.classList.remove('auth-locked');
+    receiveDiary(data||{});render();
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
     saveLocal();
@@ -180,7 +181,7 @@ function pushToFirebase() {
     quickMemo: document.getElementById('quickMemo').value,
     updatedAt: Date.now(),
   };
-  DATA_REF.set(payload)
+  DATA_REF.update(payload)
     .then(() => setSyncStatus('ok', '실시간 동기화 중'))
     .catch(() => {
       setSyncStatus('err', '저장 실패 — 로컬에 임시 저장');
@@ -420,7 +421,7 @@ function updateViewMode() {
   document.getElementById('ledgerActions').classList.toggle('show', isLedger);
   document.querySelector('.header-title').innerHTML = isLedger ? '&#128176; 윤호의 가계부' : '&#128197; 윤호의 스케줄표';
   document.querySelector('.header-sub').textContent = isLedger ? "Yoonho's Personal Ledger" : "Yoonho's Personal Schedule";
-  if(isDiary){document.querySelector('.header-title').textContent='📝 윤호의 일기';document.querySelector('.header-sub').textContent="Yoonho's Personal Diary · 이 브라우저에만 저장";}
+  if(isDiary){document.querySelector('.header-title').textContent='📝 윤호의 일기';document.querySelector('.header-sub').textContent="Yoonho's Personal Diary · 본인 계정 동기화";}
 }
 
 function formatWon(amount) {
