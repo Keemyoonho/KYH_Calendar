@@ -68,6 +68,28 @@ const assert=require('node:assert/strict');
     assert.equal(await page.locator('#buyList li').count(),0);
     await page.evaluate(()=>{loadMonthlySections({monthlySectionsVersion:1,monthlyBuyLists:{[currentMonthKey()]:{title:'빈 목록'}}});renderBuySlot();});
     assert.equal(await page.locator('#buyList li').count(),0);
+    for(const category of ['tech','food','medicine','other']){
+      await page.locator('#buyInput').fill('물품 '+category);
+      await page.locator('#buyDescription').fill('<b>설명</b>');
+      await page.locator('#buyCategory').selectOption(category);
+      await page.locator('#buyPrice').fill(category==='tech'?'35000':'0');
+      await page.locator('#buyInput').press('Enter');
+    }
+    assert.equal(await page.locator('#buyList li').count(),4);
+    assert.match(await page.locator('#buyList').textContent(),/35,000원/);
+    assert.equal(await page.locator('#buyList b').count(),0);
+    assert.equal(await page.locator('#buyList [role="img"]').first().getAttribute('aria-label'),'테크');
+    await page.locator('#buyInput').fill('잘못된 가격');
+    await page.locator('#buyPrice').fill('-1');
+    await page.locator('#buyInput').press('Enter');
+    assert.equal(await page.locator('#buyList li').count(),4);
+    await page.locator('#buyPrice').fill('');
+    await page.locator('#buyInput').press('Enter');
+    assert.equal(await page.locator('#buyList li').count(),5);
+    await page.evaluate(()=>pushToFirebase());
+    assert.equal(await page.evaluate(()=>window.lastSync.monthlyBuyLists[currentMonthKey()].items[0].price),35000);
+    await page.evaluate(()=>{loadMonthlySections(window.lastSync);renderBuySlot();});
+    assert.equal(await page.locator('#buyList li').count(),5);
     await page.evaluate(()=>{monthlyGoals[currentMonthKey()]=Array.from({length:12},(_,i)=>({text:'목표 '+i,done:false}));monthlyGoals[currentMonthKey()].push({text:'긴목표'.repeat(100),done:false});renderMonthlyGoals();});
     for(const width of [1280,390,320])for(const theme of ['light','dark']){
       await page.setViewportSize({width,height:850});

@@ -94,6 +94,16 @@
   .todo-input-row input:focus { border-color: #667eea; }
   .todo-add-btn { background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700; }
   .buy-accent { accent-color: #e91e9a; }
+  .buy-form { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px; margin-top: 10px; align-items: end; }
+  .buy-description-field { grid-column: 1 / -1; }
+  .buy-form select { width: 100%; min-width: 0; padding: 7px; border: 1px solid #ddd; border-radius: 8px; background: white; color: #333; font: inherit; font-size: 16px; }
+  .buy-form .buy-add-btn { min-height: 34px; }
+  .buy-item-content { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .buy-item-description { font-size: .75rem; color: #747c8d; white-space: pre-wrap; margin-top: 3px; }
+  .buy-item-price { font-size: .78rem; font-weight: 700; color: #c2185b; margin-top: 3px; }
+  html[data-theme="dark"] .buy-form select { background: #101625; color: #e7eaf2; border-color: #35405a; }
+  html[data-theme="dark"] .buy-item-description { color: #9ca6bb; }
+  html[data-theme="dark"] .buy-item-price { color: #f3a1cc; }
   .buy-add-btn { background: linear-gradient(135deg,#e91e9a,#c2185b); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-weight: 700; }
   .buy-input-row input:focus { border-color: #e91e9a; }
   /* Buy list 슬롯 헤더 */

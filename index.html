@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260905-goals-wrap">
+<link rel="stylesheet" href="./css/styles.css?v=20260905-buy-details">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -230,9 +230,12 @@
           </div>
         </div>
         <ul class="todo-list" id="buyList"></ul>
-        <div class="todo-input-row buy-input-row">
-          <input type="text" id="buyInput" placeholder="살 것 추가..." onkeydown="buyKey(event)" />
-          <button class="buy-add-btn" onclick="addBuy()">추가</button>
+        <div class="buy-form" onkeydown="buyKey(event)">
+          <div class="mini-field"><label for="buyInput">물품명</label><input type="text" id="buyInput" placeholder="예: 무선 마우스" required /></div>
+          <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="other" selected>📦 그 외</option></select></div>
+          <div class="mini-field buy-description-field"><label for="buyDescription">물품 설명 (선택)</label><input type="text" id="buyDescription" placeholder="예: 검정색, 무소음" /></div>
+          <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="number" id="buyPrice" min="0" step="1" max="9007199254740991" placeholder="예: 35000" /></div>
+          <button class="buy-add-btn" type="button" onclick="addBuy()">추가</button>
         </div>
         <div class="buy-slot-dots" id="buySlotDots"></div>
       </div>
@@ -373,6 +376,6 @@
   </div>
 </div>
 
-<script src="./js/app.js?v=20260905-date-add"></script>
+<script src="./js/app.js?v=20260905-buy-details"></script>
 </body>
 </html>

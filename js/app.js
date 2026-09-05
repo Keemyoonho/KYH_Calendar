@@ -341,6 +341,7 @@ function toggleMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)retur
 function editMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)return;const text=prompt('목표 수정',item.text);if(text===null||!text.trim())return;item.text=text.trim();renderMonthlyGoals();scheduleSync();}
 function deleteMonthlyGoal(i){if(!currentMonthlyGoals()[i]||!confirm('이 목표를 삭제할까요?'))return;currentMonthlyGoals().splice(i,1);renderMonthlyGoals();scheduleSync();}
 // ── Buy list 슬롯 ──
+const BUY_CATEGORIES={tech:{icon:'💻',label:'테크'},food:{icon:'🍎',label:'음식'},medicine:{icon:'💊',label:'약품'},other:{icon:'📦',label:'그 외'}};
 function renderBuySlot() {
   const slot = currentBuyList();
   document.getElementById('buySlotTitle').value = curBuySlot===0?'이 달의 구매 리스트':slot.title || '';
@@ -352,7 +353,7 @@ function renderBuySlot() {
   document.getElementById('buyList').innerHTML = slot.items.map((b,i) =>
     `<li class="todo-item">
       <input type="checkbox" class="buy-accent" ${b.done?'checked':''} onchange="toggleBuy(${i})" />
-      <span class="${b.done?'done':''}" onclick="toggleBuy(${i})">${escapeHtml(b.text)}</span>
+      <div class="buy-item-content"><span class="${b.done?'done':''}" onclick="toggleBuy(${i})"><span role="img" aria-label="${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).label}">${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).icon}</span> ${escapeHtml(b.text)}</span>${b.description?`<div class="buy-item-description">${escapeHtml(b.description)}</div>`:''}${b.price!==''&&b.price!=null&&Number.isFinite(Number(b.price))?`<div class="buy-item-price">${Number(b.price).toLocaleString('ko-KR')}원</div>`:''}</div>
       <button class="del-todo" onclick="delBuy(${i})">&#10005;</button>
     </li>`
   ).join('');
@@ -369,13 +370,17 @@ function changeBuySlot(d) { curBuySlot = Math.max(0, Math.min(BUY_SLOT_COUNT-1, 
 function goBuySlot(i) { curBuySlot = i; renderBuySlot(); }
 function addBuy() {
   const inp = document.getElementById('buyInput');
-  const text = inp.value.trim(); if (!text) return;
-  currentBuyList().items.push({ text, done: false });
-  renderBuySlot(); inp.value = ''; scheduleSync();
+  const text = inp.value.trim(); if (!text) {inp.focus();return;}
+  const priceInput=document.getElementById('buyPrice');
+  if(!priceInput.reportValidity())return;
+  const price=priceInput.value===''?'':Number(priceInput.value);
+  const category=document.getElementById('buyCategory').value;
+  currentBuyList().items.push({text,done:false,description:document.getElementById('buyDescription').value.trim(),category:BUY_CATEGORIES[category]?category:'other',price});
+  renderBuySlot(); inp.value = '';document.getElementById('buyDescription').value='';priceInput.value=''; scheduleSync();
 }
 function toggleBuy(i) { currentBuyList().items[i].done = !currentBuyList().items[i].done; renderBuySlot(); scheduleSync(); }
 function delBuy(i) { currentBuyList().items.splice(i,1); renderBuySlot(); scheduleSync(); }
-function buyKey(e) { if(e.key==='Enter') addBuy(); }
+function buyKey(e) { if(e.key==='Enter'&&!e.isComposing&&e.target.tagName==='INPUT'){e.preventDefault();addBuy();} }
 
 // ── 일정 / 가계부 모드 ──
 function setViewMode(mode) {
