@@ -60,7 +60,7 @@ async function migrateDiary(){
    for(const [date,record] of Object.entries(records)){if(!canSync())throw Error('locked');await DATA_REF.child('diaryRecords/'+date).transaction(current=>current===null?record:undefined,undefined,false);}
   }
   diaryMigrationDone=true;try{localStorage.setItem('yoonho_diary_migrated_v2','yes');}catch(e){}
-  document.getElementById('diaryCloudStatus').textContent='본인 계정으로 저장·동기화합니다. 기존 브라우저 기록은 이전 완료 후 아래 원본 보관함에서도 확인할 수 있습니다.';
+  document.getElementById('diaryCloudStatus').textContent='본인 계정으로 저장·동기화합니다. ‘서버 저장 완료’를 확인한 뒤 브라우저 데이터를 삭제해 주세요.';
  }catch(e){document.getElementById('diaryCloudStatus').textContent='기존 일기 이전이 완료되지 않았습니다. 브라우저 데이터를 삭제하지 말고 저장 재시도를 눌러주세요.';}
  finally{diaryMigrationRunning=false;}
 }
@@ -78,7 +78,7 @@ async function flushDiary(date){
   if(!result.committed){
    await backupDiary({[date]:job.record},'동시 수정으로 보관한 일기');
    if(diaryPending[date]===job){delete diaryPending[date];diaryRecords[date]=cleanDiary(result.snapshot.val());}
-   diaryMessage('다른 기기의 기록과 겹쳤습니다. 입력 내용은 원본 보관함에 저장했습니다. 날짜를 다시 눌러 확인해 주세요.');
+   diaryMessage('다른 기기의 기록과 겹쳤습니다. 입력 내용은 서버에 별도 보존했습니다. 날짜를 다시 눌러 최신 기록을 확인해 주세요.');
   }else{
    diaryBases[date]=job.record;
    if(diaryPending[date]===job)delete diaryPending[date];else if(diaryPending[date])diaryPending[date].base=job.record;
@@ -91,6 +91,7 @@ async function flushDiary(date){
 function retryDiary(){if(!canSync())return;for(const date of Object.keys(diaryPending))if(isSafeCalendarDate(date))flushDiary(date);migrateDiary();}
 function renderDiaryImports(){
  const box=document.getElementById('diaryImports');
+ if(!box)return;
  box.innerHTML=Object.values(diaryImports).map(entry=>`<details><summary>${escapeHtml(entry.reason||'일기 원본')} · ${Object.keys(entry.records||{}).length}일</summary>${Object.entries(entry.records||{}).map(([date,raw])=>{const r=cleanDiary(raw);return `<h4>${escapeHtml(date)} ${escapeHtml(r.mood)}</h4><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(r.body)}\n${escapeHtml(r.tasks.map(t=>(t.done?'✓ ':'□ ')+t.text).join('\n'))}</pre>`;}).join('')}</details>`).join('');
 }
 window.addEventListener('beforeunload',e=>{if(diarySaveFailed||diaryMigrationRunning){e.preventDefault();e.returnValue='';}});
