@@ -870,7 +870,7 @@ function render() {
     let badges='', clickHandler='', expenseFooter='';
     if(viewMode==='diary'){
       const record=diaryRecords[dateStr];
-      if(record&&(record.body||record.mood||record.tasks?.length))badges='<div class="diary-badge">📝 '+escapeHtml(record.mood||'기록')+'</div>';
+      if(record&&(record.body||record.mood||record.tasks?.length||record.title||record.highlight||record.gratitude||record.tomorrow||record.meals))badges='<div class="diary-badge">📝 '+escapeHtml(record.title||record.mood||'기록')+'</div>';
       clickHandler=`openDiary('${dateStr}')`;
     }else if(viewMode==='ledger'){
       const dayTx=getLedgerEntriesForDate(dateStr);

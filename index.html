@@ -13,7 +13,7 @@
 <meta name="application-name" content="윤호의 스케줄표">
 <meta name="apple-mobile-web-app-title" content="윤호 캘린더">
 <meta name="theme-color" content="#000000">
-<link rel="stylesheet" href="./css/styles.css?v=20260906-security">
+<link rel="stylesheet" href="./css/styles.css?v=20260906-diary-fields">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -150,10 +150,17 @@
     <button type="button" class="goal-edit" onclick="retryDiary()">저장 재시도</button>
     <div id="diaryEditor" hidden>
       <div class="panel-hint" id="diarySchedule"></div>
+      <div class="mini-field"><label for="diaryTitle">하루 제목</label><input id="diaryTitle" placeholder="오늘을 한 문장으로 표현한다면?" oninput="saveDiary()" /></div>
       <div class="mini-field"><label for="diaryMood">오늘의 기분</label><select id="diaryMood" onchange="saveDiary()"><option value="">선택 안 함</option><option value="😊">😊 좋음</option><option value="😐">😐 보통</option><option value="😔">😔 아쉬움</option><option value="😴">😴 피곤함</option></select></div>
       <h3>오늘 한 일</h3><ul class="todo-list" id="diaryTasks"></ul>
       <div class="todo-input-row"><input id="diaryTaskInput" aria-label="오늘 한 일 추가" placeholder="오늘 한 일 추가…" onkeydown="if(event.key==='Enter'&&!event.isComposing)addDiaryTask()" /><button type="button" class="todo-add-btn" onclick="addDiaryTask()">추가</button></div>
       <div class="mini-field"><label for="diaryBody">일기</label><textarea id="diaryBody" rows="8" placeholder="오늘 있었던 일과 생각을 자유롭게 남겨보세요." oninput="saveDiary()"></textarea></div>
+      <details class="diary-extras"><summary>추가 기록 · 하이라이트 / 감사 / 내일 / 식단</summary>
+        <div class="mini-field"><label for="diaryHighlight">오늘의 하이라이트</label><textarea id="diaryHighlight" rows="2" placeholder="가장 기억에 남는 순간" oninput="saveDiary()"></textarea></div>
+        <div class="mini-field"><label for="diaryGratitude">감사한 일</label><textarea id="diaryGratitude" rows="2" placeholder="오늘 감사했던 사람이나 일" oninput="saveDiary()"></textarea></div>
+        <div class="mini-field"><label for="diaryTomorrow">내일의 나에게</label><textarea id="diaryTomorrow" rows="2" placeholder="내일 기억했으면 하는 말" oninput="saveDiary()"></textarea></div>
+        <div class="mini-field"><label for="diaryMeals">오늘의 식단</label><textarea id="diaryMeals" rows="3" placeholder="아침:&#10;점심:&#10;저녁 / 간식:" oninput="saveDiary()"></textarea></div>
+      </details>
       <div class="panel-hint" id="diarySaveStatus" role="status"></div>
     </div>
   </section>
@@ -399,8 +406,8 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20260906-clean"></script>
+<script src="./js/diary.js?v=20260906-fields"></script>
 <script src="./js/security.js?v=20260906-diary-cloud"></script>
-<script src="./js/app.js?v=20260906-diary-cloud"></script>
+<script src="./js/app.js?v=20260906-diary-fields"></script>
 </body>
 </html>

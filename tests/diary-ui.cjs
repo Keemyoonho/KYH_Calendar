@@ -34,6 +34,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.getByRole('tab',{name:'📝 일기',exact:true}).click();
   await page.evaluate(()=>openDiary('2026-09-03'));
   await page.locator('#diaryBody').fill('cloud diary');
+  await page.locator('#diaryTitle').fill('기억할 하루');
+  await page.locator('.diary-extras summary').click();
+  for(const [id,text] of [['diaryHighlight','산책'],['diaryGratitude','친구'],['diaryTomorrow','힘내자'],['diaryMeals','아침: 달걀\n점심: 밥']])await page.locator('#'+id).fill(text);
   await page.locator('#diaryMood').selectOption('😊');
   await page.locator('#diaryTaskInput').fill('책 읽기');await page.locator('#diaryTaskInput').press('Enter');
   await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
@@ -45,6 +48,15 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.evaluate(()=>{memory={};diaryRecords={};diaryPending={};receiveDiary(cloud);openDiary('2026-09-03');});
   assert.equal(await page.locator('#diaryBody').inputValue(),'cloud diary');
   assert.equal(await page.locator('#diaryMood').inputValue(),'😊');
+  assert.equal(await page.locator('#diaryTitle').inputValue(),'기억할 하루');
+  assert.equal(await page.locator('#diaryHighlight').inputValue(),'산책');
+  assert.equal(await page.locator('#diaryGratitude').inputValue(),'친구');
+  assert.equal(await page.locator('#diaryTomorrow').inputValue(),'힘내자');
+  assert.equal(await page.locator('#diaryMeals').inputValue(),'아침: 달걀\n점심: 밥');
+  await page.evaluate(()=>openDiary('2026-09-04'));
+  assert.equal(await page.locator('#diaryTitle').inputValue(),'');
+  assert.equal(await page.locator('#diaryMeals').inputValue(),'');
+  await page.evaluate(()=>openDiary('2026-09-03'));
   await page.evaluate(()=>{fail=true;});
   await page.locator('#diaryBody').fill('pending text');
   await page.waitForFunction(()=>diarySaveFailed&&!diaryInflight.size);

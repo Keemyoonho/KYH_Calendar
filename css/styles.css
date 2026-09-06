@@ -184,6 +184,10 @@
   #diaryEditor .mini-field { margin-top: 12px; }
   #diaryEditor textarea, #diaryEditor select { width: 100%; border: 1px solid #dce1eb; border-radius: 8px; padding: 10px; font: inherit; font-size: 16px; color: #343a47; background: white; }
   #diaryEditor textarea { resize: vertical; min-height: 160px; }
+  #diaryEditor .diary-extras textarea { min-height: 70px; }
+  .diary-extras { margin-top: 14px; }
+  .diary-extras summary { cursor: pointer; font-size: .85rem; }
+  .diary-badge { overflow-wrap: anywhere; }
   #diaryEditor .todo-input-row input, #diaryTasks span { min-width: 0; overflow-wrap: anywhere; }
   .diary-badge { font-size: .75rem; color: #667eea; padding: 4px 0; }
   html[data-theme="dark"] #diaryEditor textarea, html[data-theme="dark"] #diaryEditor select { color: #e7eaf2; background: #101625; border-color: #35405a; }

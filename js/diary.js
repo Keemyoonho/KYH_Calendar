@@ -5,7 +5,8 @@ let diaryBases={},diaryPending={},diaryImports={},diaryMigrationRunning=false,di
 const diaryInflight=new Set();
 let diaryLegacy={};
 try{diaryLegacy=JSON.parse(localStorage.getItem(DIARY_KEY)||'{}')||{};diaryMigrationDone=localStorage.getItem('yoonho_diary_migrated_v2')==='yes';diaryPending=JSON.parse(localStorage.getItem(DIARY_PENDING_KEY)||'{}')||{};}catch(e){}
-function cleanDiary(r={}){return {body:String(r?.body||''),mood:['😊','😐','😔','😴'].includes(r?.mood)?r.mood:'',tasks:Array.isArray(r?.tasks)?r.tasks.filter(t=>t&&typeof t.text==='string').map(t=>({text:t.text,done:!!t.done})):[]};}
+const DIARY_FIELDS={title:'diaryTitle',highlight:'diaryHighlight',gratitude:'diaryGratitude',tomorrow:'diaryTomorrow',meals:'diaryMeals'};
+function cleanDiary(r={}){return {...Object.fromEntries(Object.keys(DIARY_FIELDS).map(key=>[key,String(r?.[key]||'')])),body:String(r?.body||''),mood:['😊','😐','😔','😴'].includes(r?.mood)?r.mood:'',tasks:Array.isArray(r?.tasks)?r.tasks.filter(t=>t&&typeof t.text==='string').map(t=>({text:t.text,done:!!t.done})):[]};}
 function sameDiary(a,b){return JSON.stringify(cleanDiary(a))===JSON.stringify(cleanDiary(b));}
 function diaryMessage(message){document.getElementById('diarySaveStatus').textContent=message;}
 function persistDiaryPending(){try{localStorage.setItem(DIARY_PENDING_KEY,JSON.stringify(diaryPending));}catch(e){}diarySaveFailed=Object.keys(diaryPending).length>0;}
@@ -20,6 +21,7 @@ function receiveDiary(data){
 function fillDiaryEditor(){
  const r=cleanDiary(diaryRecords[diaryDate]);diaryBases[diaryDate]=r;diaryTasks=r.tasks;
  document.getElementById('diaryBody').value=r.body;document.getElementById('diaryMood').value=r.mood;renderDiaryTasks();
+ for(const [key,id] of Object.entries(DIARY_FIELDS))document.getElementById(id).value=r[key];
 }
 function openDiary(date){
  if(!canSync())return;
@@ -39,7 +41,7 @@ function toggleDiaryTask(i){diaryTasks[i].done=!diaryTasks[i].done;renderDiaryTa
 function deleteDiaryTask(i){diaryTasks.splice(i,1);renderDiaryTasks();saveDiary();}
 function saveDiary(){
  if(!diaryDate||!canSync())return;
- const record=cleanDiary({body:document.getElementById('diaryBody').value,mood:document.getElementById('diaryMood').value,tasks:diaryTasks});
+ const record=cleanDiary({...Object.fromEntries(Object.entries(DIARY_FIELDS).map(([key,id])=>[key,document.getElementById(id).value])),body:document.getElementById('diaryBody').value,mood:document.getElementById('diaryMood').value,tasks:diaryTasks});
  const base=diaryPending[diaryDate]?.base||diaryBases[diaryDate]||cleanDiary({});
  diaryPending[diaryDate]={record,base};diaryRecords[diaryDate]=record;persistDiaryPending();
  diaryMessage('서버 저장 중… 완료 전에는 브라우저 데이터를 삭제하지 마세요.');render();flushDiary(diaryDate);
