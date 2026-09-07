@@ -30,31 +30,31 @@ function toggleTheme() {
 }
 
 const CATS = {
-  school:   { label: '학교 관련', color: '#4a7cf7', bg: '#eef3ff', border: '#4a7cf7' },
-  exam:     { label: '시험 관련', color: '#e74c3c', bg: '#fff0f0', border: '#e74c3c' },
-  personal: { label: '개인 일정', color: '#2ecc71', bg: '#f0fff5', border: '#2ecc71' },
-  diet:     { label: '다이어트',   color: '#00a88f', bg: '#e9fffb', border: '#00a88f' },
-  anniv:    { label: '기념일',    color: '#e91e9a', bg: '#fff0f8', border: '#e91e9a' },
-  etc:      { label: '그 외',    color: '#f39c12', bg: '#fffbf0', border: '#f39c12' },
+  school:   { label: '학교 관련', color: '#7a7a7a', bg: '#f3f3f3', border: '#7a7a7a' },
+  exam:     { label: '시험 관련', color: '#6c6c6c', bg: '#f3f3f3', border: '#6c6c6c' },
+  personal: { label: '개인 일정', color: '#a4a4a4', bg: '#fbfbfb', border: '#a4a4a4' },
+  diet:     { label: '다이어트',   color: '#828282', bg: '#fafafa', border: '#828282' },
+  anniv:    { label: '기념일',    color: '#525252', bg: '#f4f4f4', border: '#525252' },
+  etc:      { label: '그 외',    color: '#a5a5a5', bg: '#fbfbfb', border: '#a5a5a5' },
 };
 
 const TRANSACTION_CATS = {
   expense: {
-    food:      { label: '🍚 식비', color: '#f39c12' },
-    transport: { label: '🚌 교통', color: '#3498db' },
-    shopping:  { label: '🛍️ 쇼핑', color: '#e91e9a' },
-    education: { label: '📚 교육', color: '#667eea' },
-    fixed:     { label: '🏠 고정비', color: '#8e6bbd' },
-    health:    { label: '💊 건강', color: '#e74c3c' },
-    leisure:   { label: '🎮 여가', color: '#2ecc71' },
-    etc:       { label: '📌 기타 지출', color: '#7f8c8d' },
+    food:      { label: '🍚 식비', color: '#a5a5a5' },
+    transport: { label: '🚌 교통', color: '#888888' },
+    shopping:  { label: '🛍️ 쇼핑', color: '#525252' },
+    education: { label: '📚 교육', color: '#818181' },
+    fixed:     { label: '🏠 고정비', color: '#787878' },
+    health:    { label: '💊 건강', color: '#6c6c6c' },
+    leisure:   { label: '🎮 여가', color: '#a4a4a4' },
+    etc:       { label: '📌 기타 지출', color: '#898989' },
   },
   income: {
-    salary:    { label: '💼 급여', color: '#159f69' },
-    allowance: { label: '💵 용돈', color: '#27ae60' },
-    sidejob:   { label: '🧑‍💻 부수입', color: '#16a085' },
-    refund:    { label: '↩️ 환급', color: '#2980b9' },
-    etcIncome: { label: '✨ 기타 수입', color: '#6c8f3d' },
+    salary:    { label: '💼 급여', color: '#7e7e7e' },
+    allowance: { label: '💵 용돈', color: '#8c8c8c' },
+    sidejob:   { label: '🧑‍💻 부수입', color: '#818181' },
+    refund:    { label: '↩️ 환급', color: '#727272' },
+    etcIncome: { label: '✨ 기타 수입', color: '#828282' },
   },
 };
 
