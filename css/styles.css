@@ -174,8 +174,17 @@
   /* 가계부 모드 */
   .header-left { display: flex; flex-direction: column; align-items: flex-start; }
   .mode-switch { display: inline-flex; padding: 3px; margin-top: 10px; background: rgba(255,255,255,.16); border-radius: 10px; gap: 2px; }
-  #authGate { max-width: 620px; margin: 40px auto; line-height: 1.8; }
-  #authGate h1 { font-size: 1.3rem; }
+  body.auth-locked { display: flex; flex-direction: column; align-items: center; min-height: 100vh; min-height: 100dvh; padding: 24px 16px; }
+  #authGate { width: 100%; max-width: 380px; margin: auto; padding: 42px 32px 30px; line-height: 1.7; text-align: center; }
+  #authGate h1 { font-family: 'Grand Hotel', 'Brush Script MT', cursive; font-size: clamp(3.4rem, 13vw, 4.2rem); font-weight: 400; line-height: 1.25; letter-spacing: 0; }
+  #authGate .auth-subtitle { margin: 12px 0 30px; font-size: .82rem; opacity: .65; }
+  #authMessage { margin-bottom: 22px; font-size: .84rem; overflow-wrap: anywhere; }
+  #authGate .auth-login { width: 100%; min-height: 44px; font-size: .9rem; }
+  #authGate .auth-divider { display: flex; align-items: center; gap: 16px; margin: 24px 0 18px; font-size: .75rem; opacity: .5; }
+  #authGate .auth-divider::before, #authGate .auth-divider::after { content: ''; flex: 1; height: 1px; background: currentColor; }
+  #authGate .auth-switch { min-height: 44px; padding: 8px 12px; font-size: .8rem; }
+  #authUid:empty { display: none; }
+  #authUid:not(:empty) { margin-top: 16px; font-size: .75rem; }
   body:not(.auth-locked) #authGate { display: none; }
   body.auth-locked .app, body.auth-locked .overlay { display: none !important; }
   .diary-panel { display: none; }
