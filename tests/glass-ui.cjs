@@ -7,11 +7,24 @@ const assert=require('node:assert/strict');
   try {
     const page=await browser.newPage();
     await page.emulateMedia({reducedMotion:'reduce'});
-    await page.route('**/*',route=>route.abort());
+    const checkFont=process.env.CALENDAR_CHECK_FONT==='1';
+    await page.route('**/*',route=>checkFont && route.request().url().startsWith('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/') ? route.continue() : route.abort());
     const root=path.join(__dirname,'..');
     const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,'');
     await page.setContent(html);
     await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/styles.css'),'utf8')});
+    if(checkFont){
+      const source=fs.readFileSync(path.join(root,'index.html'),'utf8');
+      const url=source.match(/href="(https:\/\/cdn\.jsdelivr\.net\/[^\"]+pretendardvariable[^\"]+)"/)[1];
+      await page.addStyleTag({url});
+      const loaded=await page.evaluate(async()=>{
+        const faces=await document.fonts.load('16px "Pretendard Variable"','오늘의 기록 Calendar 123');
+        return faces.length>0 && faces.every(face=>face.status==='loaded');
+      });
+      assert.equal(loaded,true,'Korean and Latin font files must actually load');
+      const families=await page.locator('body,button,input,textarea,select').evaluateAll(nodes=>nodes.map(e=>getComputedStyle(e).fontFamily));
+      assert.ok(families.every(family=>family.includes('Pretendard Variable')));
+    }
     await page.addScriptTag({content:`Object.defineProperty(window,'localStorage',{value:{getItem(){return null},setItem(){}}}); window.firebase={initializeApp(){},database(){return {ref(){return {on(){},update(){return Promise.resolve()}}}}}};`});
     await page.addScriptTag({content:"window.canSync=()=>true;window.startSecurity=()=>document.body.classList.remove('auth-locked');"});
     await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/app.js'),'utf8')});
