@@ -419,9 +419,9 @@ function updateViewMode() {
   document.getElementById('ledgerLegend').style.display = isLedger ? 'flex' : 'none';
   document.getElementById('ledgerSummary').classList.toggle('show', isLedger);
   document.getElementById('ledgerActions').classList.toggle('show', isLedger);
-  document.querySelector('.header-title').innerHTML = isLedger ? '&#128176; 윤호의 가계부' : '&#128197; 윤호의 스케줄표';
-  document.querySelector('.header-sub').textContent = isLedger ? "Yoonho's Personal Ledger" : "Yoonho's Personal Schedule";
-  if(isDiary){document.querySelector('.header-title').textContent='📝 윤호의 일기';document.querySelector('.header-sub').textContent="Yoonho's Personal Diary · 본인 계정 동기화";}
+  document.querySelector('.header-title').textContent = isLedger ? "💰 Keemyoonho's 가계부" : "📅 Keemyoonho's 스케줄표";
+  document.querySelector('.header-sub').textContent = isLedger ? "Keemyoonho's Personal Ledger" : "Keemyoonho's Personal Schedule";
+  if(isDiary){document.querySelector('.header-title').textContent="📝 Keemyoonho's 일기";document.querySelector('.header-sub').textContent="Keemyoonho's Personal Diary · 본인 계정 동기화";}
 }
 
 function formatWon(amount) {
