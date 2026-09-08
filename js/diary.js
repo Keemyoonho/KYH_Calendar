@@ -28,15 +28,29 @@ function openDiary(date){
  diaryDate=date;
  document.getElementById('diaryHeading').textContent='📝 '+date+' 일기';
  document.getElementById('diaryEditor').hidden=false;
- fillDiaryEditor();document.getElementById('diaryTaskInput').value='';
+ fillDiaryEditor();renderDiarySpending();document.getElementById('diaryTaskInput').value='';
  diaryMessage(diaryPending[date]?'서버 저장 대기 중입니다. 브라우저 데이터를 삭제하지 마세요.':'본인 계정으로 자동 저장·동기화됩니다.');
  document.getElementById('diarySchedule').textContent='이날 일정: '+(getEventsForDate(date).map(e=>e.title).join(' · ')||'등록된 일정 없음');
  document.getElementById('diaryPanel').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderDiaryTasks(){
+ document.getElementById('diaryTaskProgress').textContent=diaryTasks.length?'완료 '+diaryTasks.filter(t=>t.done).length+' / '+diaryTasks.length+'개':'오늘 할 일을 추가하고 수행한 항목을 체크해 주세요.';
  document.getElementById('diaryTasks').innerHTML=diaryTasks.map((t,i)=>`<li class="todo-item"><input type="checkbox" aria-label="한 일 ${i+1} 완료" ${t.done?'checked':''} onchange="toggleDiaryTask(${i})"><span class="${t.done?'done':''}">${escapeHtml(t.text)}</span><button type="button" class="del-todo" aria-label="한 일 ${i+1} 삭제" onclick="deleteDiaryTask(${i})">✕</button></li>`).join('');
 }
-function addDiaryTask(){const input=document.getElementById('diaryTaskInput'),text=input.value.trim();if(!diaryDate||!text)return;diaryTasks.push({text,done:true});input.value='';renderDiaryTasks();saveDiary();}
+function addDiaryTask(){const input=document.getElementById('diaryTaskInput'),text=input.value.trim();if(!diaryDate||!text)return;diaryTasks.push({text,done:false});input.value='';renderDiaryTasks();saveDiary();}
+function renderDiarySpending(){
+ if(!diaryDate||!canSync())return;
+ const entries=getLedgerEntriesForDate(diaryDate).filter(t=>t.type==='expense');
+ document.getElementById('diarySpendingTotal').textContent='총 '+formatWon(entries.reduce((sum,t)=>sum+(Number(t.amount)||0),0))+' · '+entries.length+'건';
+ const box=document.getElementById('diarySpending');box.replaceChildren();
+ if(!entries.length){const li=document.createElement('li');li.className='panel-hint';li.textContent='이날 등록된 소비 내역이 없습니다.';box.append(li);}
+ for(const t of entries){
+  const li=document.createElement('li'),description=document.createElement('div'),title=document.createElement('span'),meta=document.createElement('small'),amount=document.createElement('strong');
+  description.className='diary-spending-description';title.textContent=t.title||'지출';
+  meta.textContent=(PAYMENT_LABELS[t.payment]||'기타')+(t._source==='fixed'?' · 고정비':(t.memo?' · '+t.memo:''));
+  amount.textContent=formatWon(t.amount);description.append(title,meta);li.append(description,amount);box.append(li);
+ }
+}
 function toggleDiaryTask(i){diaryTasks[i].done=!diaryTasks[i].done;renderDiaryTasks();saveDiary();}
 function deleteDiaryTask(i){diaryTasks.splice(i,1);renderDiaryTasks();saveDiary();}
 function saveDiary(){

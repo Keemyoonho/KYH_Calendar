@@ -188,6 +188,13 @@
   body:not(.auth-locked) #authGate { display: none; }
   body.auth-locked .app, body.auth-locked .overlay { display: none !important; }
   .diary-panel { display: none; }
+  .diary-section { margin: 24px 0; padding-top: 18px; border-top: 1px solid rgba(128,128,128,.25); }
+  .diary-spending-total { margin: 12px 0; font-weight: 700; }
+  .diary-spending-list { list-style: none; }
+  .diary-spending-list li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid rgba(128,128,128,.16); }
+  .diary-spending-description { flex: 1; min-width: 120px; overflow-wrap: anywhere; }
+  .diary-spending-description small { display: block; opacity: .65; margin-top: 4px; }
+  .diary-spending-list strong { overflow-wrap: anywhere; max-width: 100%; }
   body.diary-view .diary-panel { display: block; }
   body.diary-view .schedule-extra, body.diary-view .ledger-extra, body.diary-view .memo-section, body.diary-view .monthly-goals, body.diary-view .today-dashboard, body.diary-view .important-strip { display: none; }
   #diaryEditor h3 { font-size: .9rem; margin: 14px 0 8px; }

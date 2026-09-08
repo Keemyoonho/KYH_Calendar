@@ -42,12 +42,33 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
   assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'cloud diary');
   assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].tasks.length),1);
+  assert.equal(await page.locator('#diaryTasks input').isChecked(),false);
+  await page.locator('#diaryTasks input').check();
+  await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
+  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].tasks[0].done),true);
+  assert.match(await page.locator('#diaryTaskProgress').textContent(),/완료 1 \/ 1개/);
+  assert.equal(await page.locator('#diaryMeals').evaluate(e=>!!e.closest('details')),false);
+  await page.evaluate(()=>{
+   transactions=[{date:'2026-09-03',title:'점심',amount:9000,type:'expense',repeat:'none'},
+    {date:'2026-09-03',title:'용돈',amount:100000,type:'income',repeat:'none'},
+    {date:'2026-09-04',title:'다른 날',amount:3000,type:'expense',repeat:'none'},
+    {date:'2026-09-03',title:'<img src=x onerror=alert(1)>',memo:'<script>bad</script>',amount:1000,type:'expense',repeat:'none'}];
+   fixedExpenses=[{title:'구독',amount:5000,day:3,startDate:'2026-09-01',active:true}];render();
+  });
+  assert.match(await page.locator('#diarySpendingTotal').textContent(),/15,000원 · 3건/);
+  assert.equal(await page.locator('#diarySpending img,#diarySpending script').count(),0);
+  assert.ok(!(await page.locator('#diarySpending').textContent()).includes('용돈'));
+  await page.evaluate(()=>{transactions[0].amount=8000;render();});
+  assert.match(await page.locator('#diarySpendingTotal').textContent(),/14,000원/);
+  await page.evaluate(()=>{transactions.splice(0,1);render();});
+  assert.match(await page.locator('#diarySpendingTotal').textContent(),/6,000원/);
   await page.evaluate(()=>pushToFirebase());
   assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'cloud diary');
   // Simulate cleared browser storage / another device using only server data.
   await page.evaluate(()=>{memory={};diaryRecords={};diaryPending={};receiveDiary(cloud);openDiary('2026-09-03');});
   assert.equal(await page.locator('#diaryBody').inputValue(),'cloud diary');
   assert.equal(await page.locator('#diaryMood').inputValue(),'😊');
+  assert.equal(await page.locator('#diaryTasks input').isChecked(),true);
   assert.equal(await page.locator('#diaryTitle').inputValue(),'기억할 하루');
   assert.equal(await page.locator('#diaryHighlight').inputValue(),'산책');
   assert.equal(await page.locator('#diaryGratitude').inputValue(),'친구');
@@ -55,6 +76,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await page.locator('#diaryMeals').inputValue(),'아침: 달걀\n점심: 밥');
   await page.evaluate(()=>openDiary('2026-09-04'));
   assert.equal(await page.locator('#diaryTitle').inputValue(),'');
+  assert.equal(await page.locator('#diaryTasks input').count(),0);
+  assert.match(await page.locator('#diarySpendingTotal').textContent(),/3,000원 · 1건/);
   assert.equal(await page.locator('#diaryMeals').inputValue(),'');
   await page.evaluate(()=>openDiary('2026-09-03'));
   await page.evaluate(()=>{fail=true;});
@@ -74,6 +97,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   for(const width of [1280,390,320])for(const theme of ['light','dark']){
    await page.setViewportSize({width,height:850});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
    assert.equal(await page.locator('#diaryPanel').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+   if(width===390&&theme==='dark'){await page.locator('#diaryMeals').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'tests','diary-enhanced-mobile.png')});}
   }
   assert.deepEqual(errors,[]);
   console.log('PASS: cloud migration/backup, date saves, browser clearing recovery, general-save preservation, offline retry, conflict backup, responsive themes');

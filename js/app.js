@@ -851,6 +851,7 @@ function deadlineStatus(dStr) {
 function toggleSection(id,cb) { document.getElementById(id).style.display = cb.checked?'block':'none'; }
 
 function render() {
+  if(typeof renderDiarySpending==='function')renderDiarySpending();
   const y=cur.getFullYear(), m=cur.getMonth();
   document.getElementById('monthLabel').textContent=`${y}년 ${m+1}월`;
   renderLedgerSummary();
