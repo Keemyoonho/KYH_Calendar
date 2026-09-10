@@ -25,6 +25,7 @@ function fillDiaryEditor(){
 }
 function openDiary(date){
  if(!canSync())return;
+ if(typeof selectGoalDate==='function'){selectGoalDate(date);document.getElementById('diaryGoalHistory').innerHTML=goalHistoryHtml(date);}
  diaryDate=date;
  document.getElementById('diaryHeading').textContent='📝 '+date+' 일기';
  document.getElementById('diaryEditor').hidden=false;

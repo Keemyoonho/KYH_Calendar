@@ -152,7 +152,9 @@ function startRealtimeSync() {
     renderTodos();
     renderBuySlot();
     syncReady=true;document.body.classList.remove('auth-locked');
-    receiveDiary(data||{});render();
+    receiveDiary(data||{});
+    if(typeof receiveGoalTracker==='function')receiveGoalTracker(data||{});
+    render();
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
     saveLocal();
@@ -767,6 +769,7 @@ function escapeHtml(value='') {
 }
 
 function openLedgerDetailModal(e, dateStr) {
+  if(typeof selectGoalDate==='function')selectGoalDate(dateStr);
   e.stopPropagation();
   ledgerDetailDateValue = dateStr;
   const parts = dateStr.split('-');
@@ -808,6 +811,7 @@ function renderLedgerDetail(dateStr) {
     <button class="btn-expense" onclick="openTransactionFromDetail('expense','${dateStr}')">− 지출 추가</button>
     <button class="btn-income" onclick="openTransactionFromDetail('income','${dateStr}')">+ 수입 추가</button>
   </div>`;
+  if(typeof goalHistoryHtml==='function')html=goalHistoryHtml(dateStr)+html;
   document.getElementById('ledgerDetailBody').innerHTML = html;
 }
 
@@ -851,6 +855,7 @@ function deadlineStatus(dStr) {
 function toggleSection(id,cb) { document.getElementById(id).style.display = cb.checked?'block':'none'; }
 
 function render() {
+  if(typeof renderGoalTracker==='function')renderGoalTracker();
   if(typeof renderDiarySpending==='function')renderDiarySpending();
   const y=cur.getFullYear(), m=cur.getMonth();
   document.getElementById('monthLabel').textContent=`${y}년 ${m+1}월`;
@@ -887,6 +892,7 @@ function render() {
       if(dayExpense){cls+=' has-expense-summary';expenseFooter=`<div class="schedule-expense-summary">−${formatWon(dayExpense)}</div>`;}
       clickHandler=`openDetailModal(event,'${dateStr}')`;
     }
+    if(typeof goalBadge==='function')badges+=goalBadge(dateStr);
     html+=`<div class="${cls}" onclick="${clickHandler}"><div class="day-num">${day}</div><div class="events">${badges}</div>${expenseFooter}</div>`;
   }
   document.getElementById('daysGrid').innerHTML=html;
@@ -915,6 +921,7 @@ function closeAddModal(){document.getElementById('addOverlay').classList.remove(
 function closeAddOutside(e){if(e.target.id==='addOverlay')closeAddModal();}
 
 function saveEvent(){
+  if(typeof ensureGoalEventIds==='function')ensureGoalEventIds();
   const title=document.getElementById('evtTitle').value.trim();const date=document.getElementById('evtDate').value;
   if(!title){document.getElementById('evtTitle').focus();return;}if(!date){document.getElementById('evtDate').focus();return;}
   const ut=document.getElementById('useTime').checked,ud=document.getElementById('useDeadline').checked,ul=document.getElementById('useLink').checked;
@@ -942,6 +949,7 @@ function saveEvent(){
 }
 
 function openDetailModal(e,dateStr){
+  if(typeof selectGoalDate==='function')selectGoalDate(dateStr);
   e.stopPropagation();detailDate=dateStr;
   const parts=dateStr.split('-');const d=new Date(+parts[0],+parts[1]-1,+parts[2]);
   const days=['일','월','화','수','목','금','토'];
@@ -967,6 +975,7 @@ function renderDetail(dateStr){
     </div>`;
   });
   html+=`<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
+  if(typeof goalHistoryHtml==='function')html=goalHistoryHtml(dateStr)+html;
   document.getElementById('detailBody').innerHTML=html;
 }
 

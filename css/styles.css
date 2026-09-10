@@ -269,6 +269,28 @@
   .important-item { border: 1px solid rgba(150,150,150,.25); background: rgba(255,255,255,.65); color: #585858; border-radius: 8px; padding: 5px 9px; font-family: inherit; font-size: .69rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .feature-panel { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 17px 19px; margin-top: 14px; }
   .monthly-goals { margin-bottom: 14px; }
+  .goal-tracker { margin-bottom: 18px; }
+  .goal-date-row, .goal-period { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .goal-date-row input { padding:7px; border-radius:8px; border:1px solid #8886; color:inherit; background:transparent; min-width:0; }
+  .goal-period .mini-field { flex:1; min-width:130px; }
+  .goal-progress { font-weight:700; margin:12px 0; }
+  #goalActiveSlogans { margin:14px 0; overflow-wrap:anywhere; }
+  #goalActiveSlogans h3 { font-size:1.05rem; margin-top:12px; }
+  .goal-checklist { display:flex; flex-wrap:wrap; gap:8px; list-style:none; margin-bottom:12px; }
+  .goal-checklist li { max-width:100%; min-width:0; border:1px solid #8885; border-radius:10px; padding:10px 12px; }
+  .goal-checklist label { display:flex; gap:10px; align-items:center; cursor:pointer; }
+  .goal-checklist input { flex-shrink:0; width:18px; height:18px; accent-color:#777; }
+  .goal-checklist span { min-width:0; overflow-wrap:anywhere; }
+  .goal-checklist small { display:block; font-size:.72rem; opacity:.65; margin-top:4px; text-decoration:none; }
+  .goal-checklist .done { text-decoration:line-through; opacity:.6; }
+  .goal-settings, .goal-legacy { margin-top:18px; border-top:1px solid #8884; padding-top:14px; }
+  .goal-settings summary, .goal-legacy summary { cursor:pointer; font-size:.85rem; }
+  .goal-plan { margin:14px 0; padding:10px; border:1px solid #8884; border-radius:10px; overflow-wrap:anywhere; }
+  .goal-history { margin:14px 0; padding:12px; border:1px solid #8884; border-radius:12px; }
+  .goal-history ul { list-style:none; }
+  .goal-history li { padding:7px 0; overflow-wrap:anywhere; font-size:.85rem; }
+  .goal-history small { display:block; opacity:.65; }
+  .goal-day-badge { font-size:.65rem; padding:3px 4px; border-radius:5px; background:#8883; color:inherit; margin-top:3px; }
   #monthlyGoalsList { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
   #monthlyGoalsList .todo-item { flex: 0 1 auto; max-width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid #e7e7e7; border-radius: 9px; }
   #monthlyGoalsList .del-todo { flex-shrink: 0; }

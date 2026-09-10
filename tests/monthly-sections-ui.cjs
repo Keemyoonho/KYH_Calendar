@@ -27,6 +27,7 @@ const assert=require('node:assert/strict');
     assert.equal(await page.locator('#quickMemo').isVisible(),false);
     assert.equal(await page.locator('#todoList').textContent().then(t=>t.includes('기존 할 일')),true);
     assert.equal(await page.locator('#buyList').textContent().then(t=>t.includes('기존 구매')),true);
+    await page.locator('.goal-legacy summary').click();
     await page.locator('#monthlyGoalsInput').fill('월 목표');
     await page.locator('#monthlyGoalsInput').press('Enter');
     await page.getByRole('checkbox',{name:'목표 1 달성',exact:true}).check();
@@ -117,7 +118,7 @@ const assert=require('node:assert/strict');
       await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
       for(const selector of ['.monthly-goals','.memo-row'])assert.equal(await page.locator(selector).evaluate(e=>e.scrollWidth<=e.clientWidth),true,`${selector} ${width} ${theme}`);
       const calendar=await page.locator('.calendar').boundingBox(),goals=await page.locator('.monthly-goals').boundingBox();
-      assert.ok(goals.y>=calendar.y+calendar.height);
+      assert.ok(goals.y+goals.height<=calendar.y);
       const boxes=await page.locator('#monthlyGoalsList li').evaluateAll(items=>items.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
       if(width===1280){assert.equal(boxes[0].y,boxes[1].y);assert.ok(boxes[1].x>boxes[0].x);}
       assert.ok(boxes.at(-1).y>boxes[0].y);
