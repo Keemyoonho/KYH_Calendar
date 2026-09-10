@@ -5,7 +5,8 @@ const goalBusy=new Set();
 function goalToday(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
 function goalId(){return 'g_'+Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
 function goalSignature(value){if(Array.isArray(value))return '['+value.map(goalSignature).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+goalSignature(value[k])).join(',')+'}';return JSON.stringify(value);}
-function goalMessage(text){const el=document.getElementById('goalSaveStatus');if(el)el.textContent=text;}
+let goalMessageTimer;
+function goalMessage(text){const el=document.getElementById('goalSaveStatus');if(!el)return;clearTimeout(goalMessageTimer);el.textContent=text;if(text.includes('완료'))goalMessageTimer=setTimeout(()=>{el.textContent='';},2500);}
 function goalHash(value){let h=2166136261;for(const ch of value){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
 function ensureGoalEventIds(){events.forEach((e,i)=>{if(!/^[a-zA-Z0-9_-]+$/.test(e.goalId||''))e.goalId='event_'+i+'_'+goalHash(JSON.stringify(e));});}
 function goalScheduleSnapshot(){ensureGoalEventIds();return events.filter(e=>e.repeat&&e.repeat!=='none').map(e=>JSON.parse(JSON.stringify(e)));}
@@ -32,7 +33,7 @@ async function syncGoalSchedule(){
   if(!canSync())throw Error('locked');
   await DATA_REF.child('goalTracker/schedules/'+today).set(record);
   goalSchedules[today]=record;
- }catch(e){goalScheduleRetry=true;goalMessage('목표 일정 저장 실패. 연결을 확인하고 저장 재시도를 눌러주세요.');}
+ }catch(e){goalScheduleRetry=true;goalMessage('목표 일정 저장 실패. 연결 복구 후 자동 재시도합니다. 계속되면 새로고침해 주세요.');}
  finally{goalScheduleSaving=false;}
  if(!goalScheduleRetry&&canSync()&&goalSignature(goalScheduleSnapshot())!==goalSignature(snapshot))syncGoalSchedule();
 }
@@ -71,7 +72,7 @@ function renderGoalTracker(){
  const box=document.getElementById('goalChecklist');if(!box)return;
  const date=goalDate||goalToday(),s=goalSummary(date),today=goalToday();
  document.getElementById('goalDate').value=date;
- document.getElementById('goalProgress').textContent=date+' · 달성 '+s.done+' / '+s.total+'개'+(date>today?' · 예정 목록 (미리 체크할 수 없어요)':'');
+ document.getElementById('goalProgress').textContent=(date>today?'예정 ':'달성 ')+s.done+' / '+s.total;
  const slogans=document.getElementById('goalActiveSlogans');slogans.replaceChildren();
  for(const p of Object.values(goalPlans))if(date>=p.start&&date<=p.end&&date>=(p.createdDate||p.start)&&(!p.stopAfter||date<=p.stopAfter)){
   const heading=document.createElement('h3'),period=document.createElement('p');heading.textContent=p.slogan;period.textContent=p.start+' ~ '+(p.stopAfter&&p.stopAfter<p.end?p.stopAfter:p.end);period.className='panel-hint';slogans.append(heading,period);
@@ -129,4 +130,5 @@ function checkGoalMidnight(){
 }
 setInterval(checkGoalMidnight,1000);
 window.addEventListener('focus',checkGoalMidnight);
+window.addEventListener('online',syncGoalSchedule);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkGoalMidnight();});

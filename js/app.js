@@ -311,6 +311,7 @@ function currentBuyList() {
   return monthlyBuyLists[key];
 }
 function renderMonthlyGoals() {
+  if(!document.getElementById('monthlyGoalsList'))return;
   const key=currentMonthKey(),items=currentMonthlyGoals();
   document.getElementById('monthlyGoalsHint').textContent=key+' · 달성한 목표에 체크하세요 · 자동 저장';
   document.getElementById('monthlyGoalsList').innerHTML=items.map((item,i)=>`<li class="todo-item"><input type="checkbox" aria-label="목표 ${i+1} 달성" ${item.done?'checked':''} onchange="toggleMonthlyGoal(${i})" /><span class="${item.done?'done':''}">${escapeHtml(item.text)}</span><button type="button" class="goal-edit" onclick="editMonthlyGoal(${i})" aria-label="목표 ${i+1} 수정">수정</button><button type="button" class="del-todo" onclick="deleteMonthlyGoal(${i})" aria-label="목표 ${i+1} 삭제">✕</button></li>`).join('');

@@ -26,6 +26,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   });
   await page.waitForFunction(()=>!goalScheduleSaving);
   assert.equal(await page.locator('#goalChecklist input').count(),1);
+  assert.equal(await page.locator('.goal-legacy').count(),0);
+  assert.equal(await page.locator('#goalSaveStatus').textContent(),'');
+  assert.equal(await page.getByRole('button',{name:'일정 연동 저장 재시도',exact:true}).count(),0);
   await page.locator('.goal-settings summary').click();
   await page.locator('#goalSlogan').fill('꾸준히 성장하기');
   await page.locator('#goalStart').fill('2026-09-11');await page.locator('#goalEnd').fill('2026-10-02');
@@ -88,6 +91,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   for(const width of [1280,390,320])for(const theme of ['light','dark']){
    await page.setViewportSize({width,height:900});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
    assert.equal(await page.locator('#goalTracker').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+   const dateBox=await page.locator('#goalDate').boundingBox(),progressBox=await page.locator('#goalProgress').boundingBox();
+   assert.ok(Math.abs(dateBox.y+dateBox.height/2-progressBox.y-progressBox.height/2)<2);
+   assert.ok(await page.locator('#goalChecklist li').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize)<14));
    const dash=await page.locator('.today-dashboard').boundingBox(),goals=await page.locator('#goalTracker').boundingBox(),cal=await page.locator('.calendar').boundingBox();
    assert.ok(goals.y>=dash.y+dash.height&&goals.y+goals.height<=cal.y);
    if(width!==320){await page.locator('#goalTracker').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'tests',`goals-${theme}-${width}.png`)});}
