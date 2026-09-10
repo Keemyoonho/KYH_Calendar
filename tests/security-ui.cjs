@@ -54,6 +54,27 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    assert.equal(await page.evaluate(()=>window.auditMarker),undefined);
    assert.equal(await page.evaluate(()=>safeEventUrl('data:text/html,test')),'');
    assert.equal(await page.evaluate(()=>safeEventUrl('https://example.com')),'https://example.com/');
+   await page.evaluate(async()=>{
+    const original=DATA_REF.update;window.cleanupCalls=[];
+    DATA_REF.update=async patch=>cleanupCalls.push(patch);
+    await purgeRetiredMonthlyGoals({monthlyGoals:{'2026-08':'old'},goalTracker:{plans:{keep:true}}});
+    DATA_REF.update=original;
+   });
+   assert.deepEqual(await page.evaluate(()=>cleanupCalls),[{monthlyGoals:null}]);
+   assert.equal(await page.locator('body').getAttribute('data-legacy-monthly-goals'),'deleted');
+   await page.evaluate(async()=>{
+    const original=DATA_REF.update;DATA_REF.update=async()=>{throw Error('offline');};
+    await purgeRetiredMonthlyGoals({monthlyGoals:{old:true}});
+    DATA_REF.update=original;
+   });
+   assert.equal(await page.locator('body').getAttribute('data-legacy-monthly-goals'),'failed');
+   await page.evaluate(()=>{
+    window.savedLocal={};localStorage.setItem=(key,value)=>savedLocal[key]=value;
+    monthlyBuyLists={'2026-09':{title:'keep',items:[]}};saveLocal();
+   });
+   const saved=await page.evaluate(()=>JSON.parse(savedLocal.yoonho_monthly_sections));
+   assert.equal(Object.hasOwn(saved,'monthlyGoals'),false);
+   assert.equal(saved.monthlyBuyLists['2026-09'].title,'keep');
    await page.evaluate(()=>{window.stale=dataCb;fakeAuth.currentUser=null;authCb(null);stale({val:()=>({events:[]})});pushToFirebase();});
    assert.equal(await page.locator('.app').isVisible(),false);assert.equal(await page.evaluate(()=>writes),1);
    await page.close();

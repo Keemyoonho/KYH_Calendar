@@ -71,7 +71,6 @@ let events = [];
 let todos  = [];
 let transactions = [];
 let monthlyBudgets = {};
-let monthlyGoals = {};
 let monthlyBuyLists = {};
 let fixedExpenses = [];
 let dietRecords = {};
@@ -111,6 +110,24 @@ function setSyncStatus(state, msg) {
     document.getElementById('syncTime').textContent =
       `마지막 동기화 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
   }
+}
+
+let legacyGoalsDeleting=false;
+async function purgeRetiredMonthlyGoals(data) {
+  if(!canSync()||legacyGoalsDeleting)return;
+  if(!data||!Object.prototype.hasOwnProperty.call(data,'monthlyGoals')){
+    document.body.dataset.legacyMonthlyGoals='deleted';return;
+  }
+  legacyGoalsDeleting=true;
+  document.body.dataset.legacyMonthlyGoals='deleting';
+  try {
+    // User explicitly requested deletion of ONLY calendar/monthlyGoals.
+    await DATA_REF.update({monthlyGoals:null});
+    document.body.dataset.legacyMonthlyGoals='deleted';
+  } catch(e) {
+    document.body.dataset.legacyMonthlyGoals='failed';
+    setSyncStatus('err','기존 월별 목표 삭제 실패 — 새로고침해 다시 시도해 주세요.');
+  } finally {legacyGoalsDeleting=false;}
 }
 
 function startRealtimeSync() {
@@ -158,6 +175,7 @@ function startRealtimeSync() {
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
     saveLocal();
+    purgeRetiredMonthlyGoals(data);
   }, (error) => {
     if(epoch!==authEpoch)return;
     lockCalendar('데이터 접근이 거부되었거나 연결에 실패했습니다. 본인 전용 Firebase 규칙을 확인해 주세요.');
@@ -173,7 +191,7 @@ function pushToFirebase() {
     todos,
     transactions,
     monthlyBudgets,
-    monthlyGoals,
+    monthlyGoals: null, // Retired data: remove rather than restore from older clients.
     monthlyBuyLists,
     monthlySectionsVersion: 1,
     fixedExpenses,
@@ -213,7 +231,7 @@ function saveLocal() {
   if(!canSync())return;
   try {
     localStorage.setItem('yoonho_v2', JSON.stringify(events));
-    localStorage.setItem('yoonho_monthly_sections', JSON.stringify({monthlyGoals,monthlyBuyLists,monthlySectionsVersion:1}));
+    localStorage.setItem('yoonho_monthly_sections', JSON.stringify({monthlyBuyLists,monthlySectionsVersion:1}));
     localStorage.setItem('yoonho_todos', JSON.stringify(todos));
     localStorage.setItem('yoonho_transactions', JSON.stringify(transactions));
     localStorage.setItem('yoonho_monthly_budgets', JSON.stringify(monthlyBudgets));
@@ -297,7 +315,6 @@ function todoKey(e) { if(e.key==='Enter') addTodo(); }
 
 // 월별 목표와 구매 목록. 기존 첫 슬롯은 실제 현재 달에 한 번만 이어받는다.
 function loadMonthlySections(data) {
-  monthlyGoals=data.monthlyGoals && typeof data.monthlyGoals==='object'?data.monthlyGoals:{};
   monthlyBuyLists=Object.fromEntries(Object.entries(data.monthlyBuyLists||{}).map(([key,list])=>[key,{title:list.title||'',items:Array.isArray(list.items)?list.items:[]}]));
   const key=todayStr().slice(0,7);
   if(!data.monthlySectionsVersion && !Object.prototype.hasOwnProperty.call(data,'monthlyBuyLists') && buySlots[0].items.length) {
@@ -310,27 +327,6 @@ function currentBuyList() {
   if(!monthlyBuyLists[key])monthlyBuyLists[key]={title:'',items:[]};
   return monthlyBuyLists[key];
 }
-function renderMonthlyGoals() {
-  if(!document.getElementById('monthlyGoalsList'))return;
-  const key=currentMonthKey(),items=currentMonthlyGoals();
-  document.getElementById('monthlyGoalsHint').textContent=key+' · 달성한 목표에 체크하세요 · 자동 저장';
-  document.getElementById('monthlyGoalsList').innerHTML=items.map((item,i)=>`<li class="todo-item"><input type="checkbox" aria-label="목표 ${i+1} 달성" ${item.done?'checked':''} onchange="toggleMonthlyGoal(${i})" /><span class="${item.done?'done':''}">${escapeHtml(item.text)}</span><button type="button" class="goal-edit" onclick="editMonthlyGoal(${i})" aria-label="목표 ${i+1} 수정">수정</button><button type="button" class="del-todo" onclick="deleteMonthlyGoal(${i})" aria-label="목표 ${i+1} 삭제">✕</button></li>`).join('');
-  const done=items.filter(item=>item.done).length;
-  document.getElementById('monthlyGoalsProgress').textContent=items.length?`달성 ${done} / ${items.length}개 · 미달성 ${items.length-done}개`:'아직 목표가 없어요. 첫 목표를 추가해 보세요.';
-  const input=document.getElementById('monthlyGoalsInput');
-  if(input.dataset.month!==key){input.value='';input.dataset.month=key;}
-}
-function currentMonthlyGoals() {
-  const key=currentMonthKey(),value=monthlyGoals[key];
-  // 기존 자유형 메모는 원문 전체를 하나의 목표로 보존한다.
-  if(typeof value==='string')monthlyGoals[key]=value.trim()?[{text:value,done:false}]:[];
-  else if(!Array.isArray(value))monthlyGoals[key]=[];
-  return monthlyGoals[key];
-}
-function addMonthlyGoal(){const input=document.getElementById('monthlyGoalsInput'),text=input.value.trim();if(!text)return;currentMonthlyGoals().push({text,done:false});input.value='';renderMonthlyGoals();scheduleSync();}
-function toggleMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)return;item.done=!item.done;renderMonthlyGoals();scheduleSync();}
-function editMonthlyGoal(i){const item=currentMonthlyGoals()[i];if(!item)return;const text=prompt('목표 수정',item.text);if(text===null||!text.trim())return;item.text=text.trim();renderMonthlyGoals();scheduleSync();}
-function deleteMonthlyGoal(i){if(!currentMonthlyGoals()[i]||!confirm('이 목표를 삭제할까요?'))return;currentMonthlyGoals().splice(i,1);renderMonthlyGoals();scheduleSync();}
 // ── Buy list 슬롯 ──
 const BUY_CATEGORIES={tech:{icon:'💻',label:'테크'},food:{icon:'🍎',label:'음식'},medicine:{icon:'💊',label:'약품'},other:{icon:'📦',label:'그 외'}};
 let buyEditor=null;
@@ -863,7 +859,6 @@ function render() {
   renderLedgerSummary();
   renderDashboard();
   renderDietTracker();
-  renderMonthlyGoals();
   renderBuySlot();
   renderLedgerStats();
   renderFixedExpenses();
