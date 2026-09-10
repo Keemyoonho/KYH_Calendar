@@ -23,7 +23,8 @@ function startSecurity(){
 }
 async function loginCalendar(){
   try{
-    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    // Keep Firebase-managed credentials on this browser until explicit sign-out.
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});
     await firebase.auth().signInWithPopup(provider);
   }catch(e){

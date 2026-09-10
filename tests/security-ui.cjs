@@ -14,6 +14,22 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    assert.match(securitySource,/const OWNER_UID='xJ47cL6Qc2dkRJfajERKQ3eBMtw2';/);
    await page.addScriptTag({content:securitySource.replace(/const OWNER_UID='[^']*';/,`const OWNER_UID='${configured?'owner':''}';`)});
    await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/app.js'),'utf8')});
+   await page.evaluate(async()=>{
+    window.loginCalls=[];
+    firebase.auth.Auth={Persistence:{LOCAL:'local',SESSION:'session'}};
+    firebase.auth.GoogleAuthProvider=function(){this.setCustomParameters=()=>{};};
+    fakeAuth.setPersistence=async mode=>loginCalls.push(mode);
+    fakeAuth.signInWithPopup=async()=>loginCalls.push('popup');
+    await loginCalendar();
+   });
+   assert.deepEqual(await page.evaluate(()=>loginCalls),['local','popup']);
+   await page.evaluate(async()=>{
+    loginCalls=[];
+    fakeAuth.setPersistence=async()=>{throw Error('storage unavailable');};
+    await loginCalendar();
+   });
+   assert.deepEqual(await page.evaluate(()=>loginCalls),[]);
+   assert.match(await page.locator('#authMessage').textContent(),/로그인 실패/);
    await page.evaluate(()=>{authCb(null);pushToFirebase();manualRefresh();});
    assert.equal(await page.evaluate(()=>reads+writes+localWrites),0);
    assert.equal(await page.locator('.app').isVisible(),false);
