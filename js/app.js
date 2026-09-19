@@ -61,7 +61,7 @@ const TRANSACTION_CATS = {
 const PAYMENT_LABELS = { card: '카드', cash: '현금', transfer: '계좌이체', etc: '기타' };
 
 const SLOT_COUNT = 10;           // 주 메모 슬롯 (4 -> 10)
-const BUY_SLOT_COUNT = 5;        // Buy list 슬롯 개수
+const BUY_SLOT_COUNT = 10;       // Buy list 슬롯 개수
 let curSlot = 0;
 let curBuySlot = 0;
 let slots  = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
@@ -92,8 +92,8 @@ function makeBuySlots(){ return Array.from({length: BUY_SLOT_COUNT}, () => ({ ti
 
 // 예전 buys(단일 배열) 데이터를 슬롯 구조로 변환
 function normalizeBuySlots(data){
-  if (Array.isArray(data.buySlots) && data.buySlots.length === BUY_SLOT_COUNT){
-    return data.buySlots.map(s => ({ title: s.title || '', items: Array.isArray(s.items) ? s.items : [] }));
+  if (Array.isArray(data.buySlots)){
+    return Array.from({length:BUY_SLOT_COUNT},(_,i)=>{const s=data.buySlots[i];return {title:s?.title||'',items:Array.isArray(s?.items)?s.items:[]};});
   }
   const bs = makeBuySlots();
   if (Array.isArray(data.buys)) bs[0].items = data.buys;  // 기존 데이터 이전
@@ -253,7 +253,7 @@ function loadLocal() {
   try { dietRecords = JSON.parse(localStorage.getItem('yoonho_diet_records') || '{}'); } catch(e) { dietRecords = {}; }
   try {
     const b = JSON.parse(localStorage.getItem('yoonho_buySlots'));
-    if (Array.isArray(b) && b.length === BUY_SLOT_COUNT) buySlots = b;
+    if (Array.isArray(b)) buySlots = normalizeBuySlots({buySlots:b});
     else {
       const oldB = JSON.parse(localStorage.getItem('yoonho_buys') || '[]');
       buySlots = makeBuySlots();
