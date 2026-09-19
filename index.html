@@ -150,7 +150,7 @@
       <div class="summary-card">
         <div class="summary-label">월 지출 예산</div>
         <div class="budget-row">
-          <input class="budget-input" id="monthlyBudgetInput" type="number" min="0" step="1000" inputmode="numeric" placeholder="예산 입력" onchange="saveMonthlyBudget()" />
+          <input class="budget-input" id="monthlyBudgetInput" type="text" data-money inputmode="numeric" placeholder="예산 입력" onchange="saveMonthlyBudget()" />
           <button class="budget-save" type="button" onclick="saveMonthlyBudget()">저장</button>
         </div>
         <div class="budget-progress"><div class="budget-progress-bar" id="budgetProgressBar"></div></div>
@@ -285,7 +285,7 @@
           <div class="mini-field"><label for="buyInput">물품명</label><input type="text" id="buyInput" placeholder="예: 무선 마우스" required /></div>
           <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="other" selected>📦 그 외</option></select></div>
           <div class="mini-field buy-description-field"><label for="buyDescription">물품 설명 (선택)</label><input type="text" id="buyDescription" placeholder="예: 검정색, 무소음" /></div>
-          <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="number" id="buyPrice" min="0" step="1" max="9007199254740991" placeholder="예: 35000" /></div>
+          <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="text" data-money inputmode="numeric" id="buyPrice" placeholder="예: 35,000" /></div>
           <button class="buy-add-btn" id="buySaveButton" type="button" onclick="addBuy()">추가</button>
           <button class="goal-edit" id="buyCancelEdit" type="button" onclick="cancelBuyEdit()" hidden>수정 취소</button>
         </div>
@@ -376,7 +376,7 @@
     </div>
     <input type="hidden" id="transactionType" value="expense" />
     <label>금액</label>
-    <div class="amount-wrap"><input type="number" id="transactionAmount" min="1" step="1" inputmode="numeric" placeholder="0" /><span class="amount-unit">원</span></div>
+    <div class="amount-wrap"><input type="text" data-money id="transactionAmount" inputmode="numeric" placeholder="0" /><span class="amount-unit">원</span></div>
     <label>내용</label><input type="text" id="transactionTitle" placeholder="예: 점심 식사" />
     <label>날짜</label><input type="date" id="transactionDate" />
     <label>카테고리</label><select id="transactionCategory"></select>
@@ -416,7 +416,7 @@
   <div class="modal">
     <h2 id="fixedExpenseModalTitle">&#127974; 고정비 추가</h2>
     <label>고정비 이름</label><input type="text" id="fixedExpenseTitle" placeholder="예: 휴대폰 요금" />
-    <label>금액</label><div class="amount-wrap"><input type="number" id="fixedExpenseAmount" min="1" step="1" inputmode="numeric" placeholder="0" /><span class="amount-unit">원</span></div>
+    <label>금액</label><div class="amount-wrap"><input type="text" data-money id="fixedExpenseAmount" inputmode="numeric" placeholder="0" /><span class="amount-unit">원</span></div>
     <label>매월 결제일</label><input type="number" id="fixedExpenseDay" min="1" max="31" step="1" placeholder="1~31" />
     <label>적용 시작일</label><input type="date" id="fixedExpenseStart" />
     <label>카테고리</label>
@@ -431,6 +431,6 @@
 <script src="./js/goals.js?v=20260920-goal-editor"></script>
 <script src="./js/diary.js?v=20260911-goals-compact"></script>
 <script src="./js/security.js?v=20260911-persistent-login"></script>
-<script src="./js/app.js?v=20260920-buy-ten"></script>
+<script src="./js/app.js?v=20260920-money"></script>
 </body>
 </html>

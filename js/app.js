@@ -12,6 +12,37 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const DATA_REF = db.ref('calendar');
 
+function moneyDigits(value){return String(value??'').replace(/,/g,'');}
+function formatMoneyInputValue(value){const digits=moneyDigits(value);return /^\d*$/.test(digits)?digits.replace(/\B(?=(\d{3})+(?!\d))/g,','):String(value);}
+function readMoneyInput(input){
+  const digits=moneyDigits(input.value),amount=digits===''?0:Number(digits);
+  const valid=/^\d*$/.test(digits)&&Number.isSafeInteger(amount)&&amount>=0;
+  input.setCustomValidity(valid?'':'0 이상의 정수를 입력해 주세요. 너무 큰 금액은 입력할 수 없습니다.');
+  if(!valid){input.reportValidity();return NaN;}return amount;
+}
+function formatMoneyTyping(input){
+  input.setCustomValidity('');
+  const raw=input.value;if(!/^[\d,]*$/.test(raw))return;
+  const cursor=input.selectionStart??raw.length,count=moneyDigits(raw.slice(0,cursor)).length;
+  input.value=formatMoneyInputValue(raw);
+  let pos=0,seen=0;while(pos<input.value.length&&seen<count){if(/\d/.test(input.value[pos]))seen++;pos++;}
+  input.setSelectionRange(pos,pos);
+}
+function initMoneyInputs(){
+  document.querySelectorAll('[data-money]').forEach(input=>{
+    input.addEventListener('input',e=>{if(!e.isComposing)formatMoneyTyping(input);});
+    input.addEventListener('compositionend',()=>formatMoneyTyping(input));
+    input.addEventListener('beforeinput',e=>{
+      const pos=input.selectionStart;if(input.selectionEnd!==pos)return;
+      if(e.inputType==='deleteContentBackward'&&pos>1&&input.value[pos-1]===','){
+        e.preventDefault();input.setRangeText('',pos-2,pos,'end');input.dispatchEvent(new Event('input',{bubbles:true}));
+      }else if(e.inputType==='deleteContentForward'&&input.value[pos]===','){
+        e.preventDefault();input.setRangeText('',pos,pos+2,'end');input.dispatchEvent(new Event('input',{bubbles:true}));
+      }
+    });
+  });
+}
+
 function updateThemeButton() {
   const button = document.getElementById('themeToggle');
   if (!button) return;
@@ -344,7 +375,7 @@ function editBuy(i){
   document.getElementById('buyInput').value=item.text||'';
   document.getElementById('buyDescription').value=item.description||'';
   document.getElementById('buyCategory').value=BUY_CATEGORIES[item.category]?item.category:'other';
-  document.getElementById('buyPrice').value=item.price??'';
+  document.getElementById('buyPrice').value=formatMoneyInputValue(item.price??'');
   document.getElementById('buySaveButton').textContent='수정 저장';
   document.getElementById('buyCancelEdit').hidden=false;
   document.getElementById('buyInput').focus();
@@ -381,8 +412,8 @@ function addBuy() {
   const inp = document.getElementById('buyInput');
   const text = inp.value.trim(); if (!text) {inp.focus();return;}
   const priceInput=document.getElementById('buyPrice');
-  if(!priceInput.reportValidity())return;
-  const price=priceInput.value===''?'':Number(priceInput.value);
+  const parsed=readMoneyInput(priceInput);if(!Number.isFinite(parsed))return;
+  const price=priceInput.value===''?'':parsed;
   const category=document.getElementById('buyCategory').value;
   const fields={text,description:document.getElementById('buyDescription').value.trim(),category:BUY_CATEGORIES[category]?category:'other',price};
   if(buyEditor){
@@ -532,7 +563,7 @@ function renderLedgerSummary() {
   balanceEl.textContent = `${balance < 0 ? '−' : ''}${formatWon(Math.abs(balance))}`;
   balanceEl.classList.toggle('negative', balance < 0);
   const budgetInput = document.getElementById('monthlyBudgetInput');
-  if (document.activeElement !== budgetInput) budgetInput.value = budget || '';
+  if (document.activeElement !== budgetInput) budgetInput.value = formatMoneyInputValue(budget || '');
   document.getElementById('budgetProgressBar').style.width = `${Math.min(percent,100)}%`;
   document.getElementById('budgetCaption').textContent = budget > 0
     ? `${percent}% 사용 · ${formatWon(Math.max(budget-expense,0))} 남음`
@@ -541,7 +572,8 @@ function renderLedgerSummary() {
 
 function saveMonthlyBudget() {
   const key = currentMonthKey();
-  const amount = Math.max(0, Number(document.getElementById('monthlyBudgetInput').value) || 0);
+  const amount = readMoneyInput(document.getElementById('monthlyBudgetInput'));
+  if(!Number.isFinite(amount))return;
   if (amount) monthlyBudgets[key] = Math.round(amount);
   else delete monthlyBudgets[key];
   renderLedgerSummary();
@@ -668,7 +700,7 @@ function openFixedExpenseModal(idx) {
   const item=editFixedExpenseIdx>=0?fixedExpenses[editFixedExpenseIdx]:{};
   document.getElementById('fixedExpenseModalTitle').textContent=editFixedExpenseIdx>=0?'✏️ 고정비 수정':'🏦 고정비 추가';
   document.getElementById('fixedExpenseTitle').value=item.title||'';
-  document.getElementById('fixedExpenseAmount').value=item.amount||'';
+  document.getElementById('fixedExpenseAmount').value=formatMoneyInputValue(item.amount||'');
   document.getElementById('fixedExpenseDay').value=item.day||1;
   document.getElementById('fixedExpenseStart').value=item.startDate||`${currentMonthKey()}-01`;
   document.getElementById('fixedExpenseCategory').value=item.category||'fixed';
@@ -681,7 +713,8 @@ function closeFixedExpenseModal(){document.getElementById('fixedExpenseOverlay')
 function closeFixedExpenseOutside(e){if(e.target.id==='fixedExpenseOverlay')closeFixedExpenseModal();}
 function saveFixedExpense(){
   const title=document.getElementById('fixedExpenseTitle').value.trim();
-  const amount=Math.round(Number(document.getElementById('fixedExpenseAmount').value)||0);
+  const amount=readMoneyInput(document.getElementById('fixedExpenseAmount'));
+  if(!Number.isFinite(amount))return;
   const day=Math.min(31,Math.max(1,Math.round(Number(document.getElementById('fixedExpenseDay').value)||1)));
   if(!title){document.getElementById('fixedExpenseTitle').focus();return;}if(amount<=0){document.getElementById('fixedExpenseAmount').focus();return;}
   const previous=editFixedExpenseIdx>=0?fixedExpenses[editFixedExpenseIdx]:null;
@@ -714,7 +747,7 @@ function openTransactionModal(type='expense', date, idx) {
   const tx = isEdit ? transactions[editTransactionIdx] : {};
   const txType = isEdit ? tx.type : type;
   setTransactionType(txType, tx.category);
-  document.getElementById('transactionAmount').value = tx.amount || '';
+  document.getElementById('transactionAmount').value = formatMoneyInputValue(tx.amount || '');
   document.getElementById('transactionTitle').value = tx.title || '';
   document.getElementById('transactionDate').value = tx.date || date || todayStr();
   document.getElementById('transactionPayment').value = tx.payment || 'card';
@@ -732,7 +765,8 @@ function closeTransactionModal() {
 function closeTransactionOutside(e) { if (e.target.id === 'transactionOverlay') closeTransactionModal(); }
 
 function saveTransaction() {
-  const amount = Math.round(Number(document.getElementById('transactionAmount').value) || 0);
+  const amount = readMoneyInput(document.getElementById('transactionAmount'));
+  if(!Number.isFinite(amount))return;
   const title = document.getElementById('transactionTitle').value.trim();
   const date = document.getElementById('transactionDate').value;
   if (amount <= 0) { document.getElementById('transactionAmount').focus(); return; }
@@ -987,4 +1021,4 @@ function openAddFromDetail(dateStr){closeDetailModal();openAddModal(dateStr);}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAddModal();closeDetailModal();closeTransactionModal();closeLedgerDetailModal();closeFixedExpenseModal();}});
 
-updateThemeButton(); updateViewMode(); render(); startSecurity();
+initMoneyInputs(); updateThemeButton(); updateViewMode(); render(); startSecurity();
