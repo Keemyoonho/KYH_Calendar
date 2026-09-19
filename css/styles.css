@@ -289,6 +289,12 @@
   .goal-settings, .goal-legacy { margin-top:18px; border-top:1px solid #8884; padding-top:14px; }
   .goal-settings summary, .goal-legacy summary { cursor:pointer; font-size:.85rem; }
   .goal-plan { margin:14px 0; padding:10px; border:1px solid #8884; border-radius:10px; overflow-wrap:anywhere; }
+  .goal-plan-delete { margin-left:10px; }
+  .goal-draft-list { list-style:none; display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 12px; }
+  .goal-draft-list:empty { display:none; }
+  .goal-draft-list li { display:flex; align-items:center; gap:8px; max-width:100%; padding:6px 9px; border:1px solid #8884; border-radius:8px; font-size:.8rem; }
+  .goal-draft-list span { min-width:0; overflow-wrap:anywhere; }
+  .goal-draft-list button { flex-shrink:0; }
   .goal-history { margin:14px 0; padding:12px; border:1px solid #8884; border-radius:12px; }
   .goal-history ul { list-style:none; }
   .goal-history li { padding:7px 0; overflow-wrap:anywhere; font-size:.85rem; }

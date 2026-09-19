@@ -32,7 +32,15 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.locator('.goal-settings summary').click();
   await page.locator('#goalSlogan').fill('꾸준히 성장하기');
   await page.locator('#goalStart').fill('2026-09-11');await page.locator('#goalEnd').fill('2026-10-02');
-  await page.locator('#goalTaskLines').fill('전공 문제 3개\n30분 걷기');
+  await page.locator('#goalTaskInput').fill('전공 문제 3개');
+  await page.locator('#goalTaskInput').press('Enter');
+  await page.locator('#goalTaskInput').fill('30분 걷기');
+  await page.locator('#goalTaskAdd').click();
+  assert.equal(await page.locator('#goalDraftList li').count(),2);
+  await page.locator('#goalTaskInput').fill('추가 취소할 목표');
+  await page.locator('#goalTaskAdd').click();
+  await page.getByRole('button',{name:'추가 취소할 목표 추가 취소',exact:true}).click();
+  assert.equal(await page.locator('#goalDraftList li').count(),2);
   await page.locator('#goalCreate').click();
   await page.waitForFunction(()=>!goalPlanSaving);
   assert.equal(await page.locator('#goalChecklist input').count(),3);
@@ -98,7 +106,37 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    assert.ok(goals.y>=dash.y+dash.height&&goals.y+goals.height<=cal.y);
    if(width!==320){await page.locator('#goalTracker').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'tests',`goals-${theme}-${width}.png`)});}
   }
-  await page.evaluate(async()=>{allowed=false;window.beforeWrites=writes.length;await toggleGoalRecord('2026-09-12',goalRows('2026-09-12')[0].key,true);await createGoalPlan();await syncGoalSchedule();});
+  // Delete cancellation and network failure preserve the selected plan and its history.
+  await page.locator('.goal-settings summary').click();
+  await page.locator('#goalTaskInput').fill('새로 추가할 목표');
+  await page.locator('#goalTaskAdd').click();
+  await page.locator('.goal-settings').scrollIntoViewIfNeeded();
+  assert.equal(await page.locator('#goalTracker').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+  await page.screenshot({path:path.join(root,'tests','goal-editor-mobile.png')});
+  page.once('dialog',d=>d.dismiss());
+  await page.locator('.goal-plan-delete').click();
+  assert.equal(await page.evaluate(()=>Object.keys(goalPlans).length),1);
+  await page.evaluate(()=>{fail=true;});
+  page.once('dialog',d=>d.accept());
+  await page.locator('.goal-plan-delete').click();
+  await page.waitForFunction(()=>!goalDeleting.size);
+  assert.equal(await page.evaluate(()=>Object.keys(goalPlans).length),1);
+  await page.evaluate(()=>{
+   fail=false;window.deletedId=Object.keys(goalPlans)[0];
+   cloud.goalTracker.plans.keep={slogan:'보존',start:'2026-09-11',end:'2026-10-02',items:{task:'별도 목표'}};
+   cloud.goalTracker.records['2026-09-11'].plan_keep_task={text:'별도 목표',group:'보존',done:true};
+   receiveGoalTracker(cloud);
+  });
+  page.once('dialog',d=>d.accept());
+  await page.locator('.goal-plan-delete').first().click();
+  await page.waitForFunction(()=>!goalDeleting.size);
+  assert.equal(await page.evaluate(()=>cloud.goalTracker.plans[deletedId]),undefined);
+  assert.equal(await page.evaluate(()=>Object.values(cloud.goalTracker.records).some(records=>Object.keys(records).some(k=>k.startsWith('plan_'+deletedId+'_')))),false);
+  assert.equal(await page.evaluate(()=>cloud.goalTracker.records['2026-09-11'].plan_keep_task.done),true);
+  assert.ok(await page.evaluate(()=>Object.keys(cloud.goalTracker.records['2026-09-11']).some(k=>k.startsWith('repeat_'))));
+  assert.ok(await page.evaluate(()=>Object.keys(cloud.goalTracker.schedules).length>0));
+  assert.equal(await page.evaluate(()=>goalRows('2026-09-11').some(r=>r.group==='꾸준히 성장하기')),false);
+  await page.evaluate(async()=>{allowed=false;window.beforeWrites=writes.length;await toggleGoalRecord('2026-09-12',goalRows('2026-09-12')[0].key,true);await createGoalPlan();await syncGoalSchedule();await deleteGoalPlan('keep');});
   assert.equal(await page.evaluate(()=>writes.length),await page.evaluate(()=>beforeWrites));
   await page.clock.install({time:new Date('2026-09-11T14:59:59Z')});
   await page.evaluate(()=>{goalToday=realGoalToday;goalLastToday='2026-09-11';goalDate='2026-09-11';});

@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" referrerpolicy="no-referrer" href="https://fonts.googleapis.com/css2?family=Grand+Hotel&amp;display=swap&amp;text=Keemyoonho">
-<link rel="stylesheet" href="./css/styles.css?v=20260911-goals-compact">
+<link rel="stylesheet" href="./css/styles.css?v=20260920-goal-editor">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -109,8 +109,8 @@
       <form onsubmit="event.preventDefault();createGoalPlan()">
         <div class="mini-field"><label for="goalSlogan">슬로건</label><input id="goalSlogan" maxlength="150" placeholder="매일 조금씩, 꾸준히 성장하기" required /></div>
         <div class="goal-period"><div class="mini-field"><label for="goalStart">시작일</label><input id="goalStart" type="date" required /></div><div class="mini-field"><label for="goalEnd">종료일 (포함)</label><input id="goalEnd" type="date" required /></div></div>
-        <div class="mini-field"><label for="goalTaskLines">기간 동안 매일 수행할 목표 (한 줄에 하나)</label><textarea id="goalTaskLines" rows="3" placeholder="전공 문제 3개 풀기&#10;30분 걷기" required></textarea></div>
-        <p class="panel-hint">목표는 설정한 기간 동안 매일 표시됩니다. 다른 요일 규칙은 반복 일정에서 설정하세요. 기존 목록을 바꾸려면 종료 후 새 목록을 시작할 수 있습니다.</p>
+        <div class="mini-field"><label for="goalTaskInput">기간 동안 매일 수행할 목표</label><div class="todo-input-row"><input id="goalTaskInput" maxlength="300" placeholder="목표 입력…" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addGoalDraft();}" /><button id="goalTaskAdd" type="button" class="todo-add-btn" onclick="addGoalDraft()">추가</button></div></div>
+        <ul id="goalDraftList" class="goal-draft-list" aria-label="추가할 목표 목록"></ul>
         <button id="goalCreate" class="todo-add-btn" type="submit">목표 시작</button>
       </form>
     </details>
@@ -428,7 +428,7 @@
   </div>
 </div>
 
-<script src="./js/goals.js?v=20260911-goals-compact"></script>
+<script src="./js/goals.js?v=20260920-goal-editor"></script>
 <script src="./js/diary.js?v=20260911-goals-compact"></script>
 <script src="./js/security.js?v=20260911-persistent-login"></script>
 <script src="./js/app.js?v=20260911-purge-monthly"></script>
