@@ -4,6 +4,7 @@ let goalScheduleSaving=false,goalScheduleRetry=false,goalPlanSaving=false;
 const goalBusy=new Set();
 let goalDraft=[];
 const goalDeleting=new Set();
+const goalEditing=new Set();
 function renderGoalDraft(){
  const list=document.getElementById('goalDraftList');list.replaceChildren();
  goalDraft.forEach((value,i)=>{const li=document.createElement('li'),text=document.createElement('span'),button=document.createElement('button');text.textContent=value;button.type='button';button.className='del-todo';button.textContent='✕';button.setAttribute('aria-label',value+' 추가 취소');button.disabled=goalPlanSaving;button.onclick=()=>{if(goalPlanSaving)return;goalDraft.splice(i,1);renderGoalDraft();};li.append(text,button);list.append(li);});
@@ -73,7 +74,7 @@ function goalRows(date){
  // A checked or explicitly unchecked record survives source edits/deletion.
  for(const [key,record] of Object.entries(goalRecords[date]||{}))if(/^[\w-]+$/.test(key)&&record&&typeof record.text==='string'){
   if(key.startsWith('plan_')&&!Object.keys(goalPlans).some(id=>key.startsWith('plan_'+id+'_')))continue;
-  rows[key]={...record,done:record.done===true};
+  rows[key]={...record,group:rows[key]?.group||record.group,done:record.done===true};
  }
  return Object.entries(rows).map(([key,row])=>({key,...row}));
 }
@@ -108,6 +109,7 @@ function renderGoalTracker(){
   const card=document.createElement('div'),heading=document.createElement('strong'),meta=document.createElement('p');
   card.className='goal-plan';heading.textContent=p.slogan;meta.className='panel-hint';meta.textContent=p.start+' ~ '+(p.stopAfter&&p.stopAfter<p.end?p.stopAfter:p.end)+' · '+Object.values(p.items||{}).join(' / ');card.append(heading,meta);
   if(p.end>=today&&!p.stopAfter){const stop=document.createElement('button');stop.type='button';stop.className='goal-edit';stop.textContent=p.start>today?'시작 취소':'내일부터 종료';stop.disabled=goalDeleting.has(id)||!canSync();stop.onclick=()=>stopGoalPlan(id);card.append(stop);}
+  const edit=document.createElement('button');edit.type='button';edit.className='goal-edit goal-plan-edit';edit.style.marginLeft='10px';edit.textContent='수정';edit.disabled=goalEditing.has(id)||goalDeleting.has(id)||!canSync();edit.onclick=()=>editGoalSlogan(id);card.append(edit);
   const remove=document.createElement('button');remove.type='button';remove.className='goal-edit goal-plan-delete';remove.textContent='삭제';remove.disabled=goalDeleting.has(id)||!canSync();remove.onclick=()=>deleteGoalPlan(id);card.append(remove);
   plans.append(card);
  }
@@ -132,6 +134,25 @@ async function createGoalPlan(){
 async function stopGoalPlan(id){
  if(!canSync()||!goalPlans[id]||goalDeleting.has(id)||!confirm('기존 달성 기록은 보존하고 내일부터 이 목표 목록을 종료할까요?'))return;
  try{await DATA_REF.child('goalTracker/plans/'+id+'/stopAfter').set(goalToday());goalPlans[id].stopAfter=goalToday();goalMessage('종료 설정 저장 완료. 이전 기록은 유지됩니다.');render();}catch(e){goalMessage('종료 저장 실패. 다시 시도해 주세요.');}
+}
+async function editGoalSlogan(id){
+ if(!canSync()||!goalPlans[id]||!/^[\w-]+$/.test(id)||goalEditing.has(id)||goalDeleting.has(id))return;
+ const original=goalPlans[id].slogan,value=prompt('슬로건 수정 (기간과 목표, 달성 기록은 유지됩니다)',original);
+ if(value===null)return;
+ const slogan=value.trim();
+ if(!slogan||slogan.length>150){goalMessage('슬로건은 1~150자로 입력해 주세요.');return;}
+ if(slogan===original)return;
+ goalEditing.add(id);renderGoalTracker();goalMessage('슬로건 저장 중…');
+ try{
+  const result=await DATA_REF.child('goalTracker/plans/'+id).transaction(current=>{
+   if(!canSync()||!current||current.slogan!==original)return;
+   return {...current,slogan};
+  },undefined,false);
+  if(!canSync())return;
+  if(!result.committed){goalMessage('다른 기기에서 수정되거나 삭제된 목표입니다. 최신 내용을 확인한 뒤 다시 수정해 주세요.');return;}
+  goalPlans[id]=result.snapshot.val();render();goalMessage('슬로건 수정 완료');
+ }catch(e){goalMessage('슬로건 저장 실패. 기존 내용은 유지됩니다. 다시 시도해 주세요.');}
+ finally{goalEditing.delete(id);renderGoalTracker();}
 }
 async function deleteGoalPlan(id){
  if(!canSync()||!goalPlans[id]||!/^[\w-]+$/.test(id)||goalDeleting.has(id))return;

@@ -108,6 +108,24 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   }
   // Delete cancellation and network failure preserve the selected plan and its history.
   await page.locator('.goal-settings summary').click();
+  assert.deepEqual(await page.locator('.goal-plan button').allTextContents(),['내일부터 종료','수정','삭제']);
+  await page.evaluate(()=>syncGoalSchedule());await page.waitForFunction(()=>!goalScheduleSaving);
+  const beforeEdit=await page.evaluate(()=>JSON.parse(JSON.stringify(cloud.goalTracker)));
+  page.once('dialog',d=>d.dismiss());await page.locator('.goal-plan-edit').click();
+  assert.equal(await page.evaluate(()=>Object.values(goalPlans)[0].slogan),'꾸준히 성장하기');
+  page.once('dialog',d=>d.accept('새로운 슬로건'));await page.locator('.goal-plan-edit').click();
+  await page.waitForFunction(()=>!goalEditing.size);
+  assert.equal(await page.evaluate(()=>Object.values(goalPlans)[0].slogan),'새로운 슬로건');
+  assert.match(await page.locator('#goalActiveSlogans').textContent(),/새로운 슬로건/);
+  const afterEdit=await page.evaluate(()=>JSON.parse(JSON.stringify(cloud.goalTracker)));
+  const planId=Object.keys(beforeEdit.plans)[0];
+  beforeEdit.plans[planId].slogan='새로운 슬로건';
+  assert.deepEqual(afterEdit,beforeEdit);
+  await page.evaluate(()=>{fail=true;});
+  page.once('dialog',d=>d.accept('실패할 수정'));await page.locator('.goal-plan-edit').click();
+  await page.waitForFunction(()=>!goalEditing.size);
+  assert.equal(await page.evaluate(()=>Object.values(goalPlans)[0].slogan),'새로운 슬로건');
+  await page.evaluate(()=>{fail=false;});
   await page.locator('#goalTaskInput').fill('새로 추가할 목표');
   await page.locator('#goalTaskAdd').click();
   await page.locator('.goal-settings').scrollIntoViewIfNeeded();
