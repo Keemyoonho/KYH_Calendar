@@ -2,20 +2,21 @@
 let goalPlans={},goalRecords={},goalSchedules={},goalStarted='',goalDate='',goalLastToday='',goalReady=false;
 let goalScheduleSaving=false,goalScheduleRetry=false,goalPlanSaving=false;
 const goalBusy=new Set();
-let goalDraft=[];
+let goalDraft=[],goalEditId=null,goalEditBase=null;
 const goalDeleting=new Set();
 const goalEditing=new Set();
 function renderGoalDraft(){
  const list=document.getElementById('goalDraftList');list.replaceChildren();
- goalDraft.forEach((value,i)=>{const li=document.createElement('li'),text=document.createElement('span'),button=document.createElement('button');text.textContent=value;button.type='button';button.className='del-todo';button.textContent='✕';button.setAttribute('aria-label',value+' 추가 취소');button.disabled=goalPlanSaving;button.onclick=()=>{if(goalPlanSaving)return;goalDraft.splice(i,1);renderGoalDraft();};li.append(text,button);list.append(li);});
+ goalDraft.forEach((value,i)=>{const li=document.createElement('li'),text=document.createElement('span'),button=document.createElement('button');text.textContent=value.text;button.type='button';button.className='del-todo';button.textContent='✕';button.setAttribute('aria-label',value.text+' 추가 취소');button.disabled=goalPlanSaving;button.onclick=()=>{if(goalPlanSaving)return;goalDraft.splice(i,1);renderGoalDraft();};const edit=document.createElement('button');edit.type='button';edit.className='goal-edit';edit.textContent='수정';edit.disabled=goalPlanSaving;edit.setAttribute('aria-label',value.text+' 항목 수정');edit.onclick=()=>{const updated=prompt('목표 항목 수정',value.text);if(updated===null)return;if(!updated.trim()||updated.trim().length>300){goalMessage('목표는 1~300자로 입력해 주세요.');return;}value.text=updated.trim();renderGoalDraft();};li.append(text,edit,button);list.append(li);});
  document.getElementById('goalTaskInput').disabled=goalPlanSaving;
  document.getElementById('goalTaskAdd').disabled=goalPlanSaving;
+ for(const id of ['goalSlogan','goalStart','goalEnd'])document.getElementById(id).disabled=goalPlanSaving;
 }
 function addGoalDraft(){
  if(goalPlanSaving||!canSync())return false;
  const input=document.getElementById('goalTaskInput'),text=input.value.trim();if(!text)return false;
  if(text.length>300||goalDraft.length>=50){goalMessage('목표는 300자 이내로 최대 50개까지 추가할 수 있습니다.');return false;}
- goalDraft.push(text);input.value='';renderGoalDraft();input.focus();return true;
+ goalDraft.push({id:goalId(),text});input.value='';renderGoalDraft();input.focus();return true;
 }
 function goalToday(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
 function goalId(){return 'g_'+Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
@@ -55,7 +56,8 @@ async function syncGoalSchedule(){
 function goalRows(date){
  if(!goalReady||!isSafeCalendarDate(date)||date<goalStarted)return [];
  const rows={};
- for(const [id,p] of Object.entries(goalPlans)){
+ for(const [id,stored] of Object.entries(goalPlans)){
+  const p=goalPlanForDate(stored,date);
   if(!/^[\w-]+$/.test(id)||!isSafeCalendarDate(p.start)||!isSafeCalendarDate(p.end))continue;
   if(date<p.start||date>p.end||date<(p.createdDate||p.start)||(p.stopAfter&&date>p.stopAfter))continue;
   for(const [task,text] of Object.entries(p.items||{}))if(/^[\w-]+$/.test(task))rows['plan_'+id+'_'+task]={text:String(text),group:String(p.slogan||'목표'),done:false};
@@ -74,7 +76,8 @@ function goalRows(date){
  // A checked or explicitly unchecked record survives source edits/deletion.
  for(const [key,record] of Object.entries(goalRecords[date]||{}))if(/^[\w-]+$/.test(key)&&record&&typeof record.text==='string'){
   if(key.startsWith('plan_')&&!Object.keys(goalPlans).some(id=>key.startsWith('plan_'+id+'_')))continue;
-  rows[key]={...record,group:rows[key]?.group||record.group,done:record.done===true};
+  if(key.startsWith('plan_')&&!rows[key]&&date>=goalToday())continue;
+  rows[key]={...record,text:rows[key]?.text||record.text,group:rows[key]?.group||record.group,done:record.done===true};
  }
  return Object.entries(rows).map(([key,row])=>({key,...row}));
 }
@@ -92,7 +95,7 @@ function renderGoalTracker(){
  document.getElementById('goalDate').value=date;
  document.getElementById('goalProgress').textContent=(date>today?'예정 ':'달성 ')+s.done+' / '+s.total;
  const slogans=document.getElementById('goalActiveSlogans');slogans.replaceChildren();
- for(const p of Object.values(goalPlans))if(date>=p.start&&date<=p.end&&date>=(p.createdDate||p.start)&&(!p.stopAfter||date<=p.stopAfter)){
+ for(const p of Object.values(goalPlans).map(p=>goalPlanForDate(p,date)))if(date>=p.start&&date<=p.end&&date>=(p.createdDate||p.start)&&(!p.stopAfter||date<=p.stopAfter)){
   const heading=document.createElement('h3'),period=document.createElement('p');heading.textContent=p.slogan;period.textContent=p.start+' ~ '+(p.stopAfter&&p.stopAfter<p.end?p.stopAfter:p.end);period.className='panel-hint';slogans.append(heading,period);
  }
  box.replaceChildren();
@@ -115,44 +118,65 @@ function renderGoalTracker(){
  }
  if(!document.getElementById('goalStart').value){document.getElementById('goalStart').value=today;document.getElementById('goalEnd').value=today;}
  document.getElementById('goalCreate').disabled=goalPlanSaving||!canSync();
+ document.getElementById('goalCreate').textContent=goalEditId?'수정 저장':'목표 시작';
+ document.getElementById('goalEditCancel').hidden=!goalEditId;
+ document.getElementById('goalEditCancel').disabled=goalPlanSaving;
  renderGoalDraft();
  const diaryHistory=document.getElementById('diaryGoalHistory');
  if(diaryHistory&&typeof diaryDate!=='undefined'&&diaryDate)diaryHistory.innerHTML=goalHistoryHtml(diaryDate);
+}
+function goalPlanForDate(plan,date){
+ const key=Object.keys(plan.versions||{}).filter(d=>d<=date).sort().pop();
+ return key?{...plan,...plan.versions[key]}:plan;
+}
+function goalPlanConfig(plan){return {slogan:plan.slogan,start:plan.start,end:plan.end,items:plan.items||{},createdDate:plan.createdDate||plan.start};}
+function cancelGoalEdit(){
+ if(goalPlanSaving)return;
+ goalEditId=null;goalEditBase=null;goalDraft=[];
+ document.getElementById('goalSlogan').value='';document.getElementById('goalTaskInput').value='';
+ document.getElementById('goalStart').value=goalToday();document.getElementById('goalEnd').value=goalToday();renderGoalTracker();
 }
 async function createGoalPlan(){
  if(!canSync()||goalPlanSaving)return;
  const slogan=document.getElementById('goalSlogan').value.trim(),start=document.getElementById('goalStart').value,end=document.getElementById('goalEnd').value;
  if(document.getElementById('goalTaskInput').value.trim()&&!addGoalDraft())return;
- const tasks=goalDraft.slice();
- if(!slogan||!tasks.length||tasks.length>50||tasks.some(t=>t.length>300)||slogan.length>150||!isSafeCalendarDate(start)||!isSafeCalendarDate(end)||end<start||start<goalToday()){goalMessage('슬로건과 추가한 목표, 오늘 이후의 시작일·종료일을 확인해 주세요.');return;}
- const id=goalId(),plan={slogan,start,end,createdDate:goalToday(),items:Object.fromEntries(tasks.map(text=>[goalId(),text]))};
+ const tasks=goalDraft.slice(),editing=!!goalEditId,id=goalEditId||goalId(),base=goalEditBase;
+ if(!slogan||!tasks.length||tasks.length>50||tasks.some(t=>!t.text||t.text.length>300)||slogan.length>150||!isSafeCalendarDate(start)||!isSafeCalendarDate(end)||end<start||(!editing&&start<goalToday())){goalMessage('슬로건, 목표 항목과 시작일·종료일을 확인해 주세요.');return;}
+ const plan={slogan,start,end,createdDate:editing?base.createdDate||base.start:goalToday(),items:Object.fromEntries(tasks.map(t=>[t.id,t.text]))};
  goalPlanSaving=true;renderGoalTracker();goalMessage('목표 저장 중…');
- try{await DATA_REF.child('goalTracker/plans/'+id).set(plan);if(!canSync())return;goalPlans[id]=plan;document.getElementById('goalSlogan').value='';goalDraft=[];goalMessage('목표 서버 저장 완료 ✓');render();}
- catch(e){goalMessage('목표 저장 실패. 입력은 유지됩니다. 연결 확인 후 다시 시작해 주세요.');}
+ try{
+  let saved=plan;
+  if(editing){
+   const result=await DATA_REF.child('goalTracker/plans/'+id).transaction(current=>{
+    if(!canSync()||!current||goalSignature(current)!==goalSignature(base))return;
+    const versions={...(current.versions||{})};
+    const first=current.createdDate||current.start;
+    if(!Object.keys(versions).length)versions[first]=goalPlanConfig(current);
+    versions[goalToday()]=goalPlanConfig(plan);
+    return {...current,...plan,versions};
+   },undefined,false);
+   if(!result.committed){goalMessage('다른 기기에서 수정·삭제된 목표입니다. 입력을 확인하고 취소 후 다시 수정해 주세요.');return;}
+   saved=result.snapshot.val();
+  }else await DATA_REF.child('goalTracker/plans/'+id).set(plan);
+  if(!canSync())return;
+  goalPlans[id]=saved;goalPlanSaving=false;cancelGoalEdit();goalMessage(editing?'목표 수정 완료':'목표 서버 저장 완료 ✓');render();
+ }catch(e){goalMessage('목표 저장 실패. 입력은 유지됩니다. 연결 확인 후 다시 저장해 주세요.');}
  finally{goalPlanSaving=false;renderGoalTracker();}
 }
 async function stopGoalPlan(id){
  if(!canSync()||!goalPlans[id]||goalDeleting.has(id)||!confirm('기존 달성 기록은 보존하고 내일부터 이 목표 목록을 종료할까요?'))return;
  try{await DATA_REF.child('goalTracker/plans/'+id+'/stopAfter').set(goalToday());goalPlans[id].stopAfter=goalToday();goalMessage('종료 설정 저장 완료. 이전 기록은 유지됩니다.');render();}catch(e){goalMessage('종료 저장 실패. 다시 시도해 주세요.');}
 }
-async function editGoalSlogan(id){
- if(!canSync()||!goalPlans[id]||!/^[\w-]+$/.test(id)||goalEditing.has(id)||goalDeleting.has(id))return;
- const original=goalPlans[id].slogan,value=prompt('슬로건 수정 (기간과 목표, 달성 기록은 유지됩니다)',original);
- if(value===null)return;
- const slogan=value.trim();
- if(!slogan||slogan.length>150){goalMessage('슬로건은 1~150자로 입력해 주세요.');return;}
- if(slogan===original)return;
- goalEditing.add(id);renderGoalTracker();goalMessage('슬로건 저장 중…');
- try{
-  const result=await DATA_REF.child('goalTracker/plans/'+id).transaction(current=>{
-   if(!canSync()||!current||current.slogan!==original)return;
-   return {...current,slogan};
-  },undefined,false);
-  if(!canSync())return;
-  if(!result.committed){goalMessage('다른 기기에서 수정되거나 삭제된 목표입니다. 최신 내용을 확인한 뒤 다시 수정해 주세요.');return;}
-  goalPlans[id]=result.snapshot.val();render();goalMessage('슬로건 수정 완료');
- }catch(e){goalMessage('슬로건 저장 실패. 기존 내용은 유지됩니다. 다시 시도해 주세요.');}
- finally{goalEditing.delete(id);renderGoalTracker();}
+function editGoalSlogan(id){
+ if(!canSync()||!goalPlans[id]||!/^[\w-]+$/.test(id)||goalPlanSaving||goalDeleting.has(id))return;
+ if((goalDraft.length||document.getElementById('goalSlogan').value.trim())&&!confirm('저장하지 않은 입력을 버리고 이 목표를 수정할까요?'))return;
+ goalEditId=id;goalEditBase=JSON.parse(JSON.stringify(goalPlans[id]));
+ const plan=goalEditBase;
+ document.getElementById('goalSlogan').value=plan.slogan;
+ document.getElementById('goalStart').value=plan.start;document.getElementById('goalEnd').value=plan.end;
+ document.getElementById('goalTaskInput').value='';
+ goalDraft=Object.entries(plan.items||{}).map(([id,text])=>({id,text}));
+ renderGoalTracker();document.getElementById('goalSlogan').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function deleteGoalPlan(id){
  if(!canSync()||!goalPlans[id]||!/^[\w-]+$/.test(id)||goalDeleting.has(id))return;

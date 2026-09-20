@@ -112,6 +112,7 @@
         <div class="mini-field"><label for="goalTaskInput">기간 동안 매일 수행할 목표</label><div class="todo-input-row"><input id="goalTaskInput" maxlength="300" placeholder="목표 입력…" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addGoalDraft();}" /><button id="goalTaskAdd" type="button" class="todo-add-btn" onclick="addGoalDraft()">추가</button></div></div>
         <ul id="goalDraftList" class="goal-draft-list" aria-label="추가할 목표 목록"></ul>
         <button id="goalCreate" class="todo-add-btn" type="submit">목표 시작</button>
+        <button id="goalEditCancel" class="goal-edit" type="button" onclick="cancelGoalEdit()" hidden>수정 취소</button>
       </form>
     </details>
   </section>
@@ -428,7 +429,7 @@
   </div>
 </div>
 
-<script src="./js/goals.js?v=20260921-slogan-edit"></script>
+<script src="./js/goals.js?v=20260921-plan-edit"></script>
 <script src="./js/diary.js?v=20260911-goals-compact"></script>
 <script src="./js/security.js?v=20260911-persistent-login"></script>
 <script src="./js/app.js?v=20260920-money"></script>
