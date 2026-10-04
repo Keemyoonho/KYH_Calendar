@@ -219,7 +219,7 @@ function startRealtimeSync() {
     renderBuySlot();
     syncReady=true;document.body.classList.remove('auth-locked');
     receiveDiary(data||{});
-    if(typeof receiveWeeklyTimetable==='function')receiveWeeklyTimetable(data||{});
+
 
     render();
     setSyncStatus('ok', '실시간 동기화 중');
@@ -859,7 +859,7 @@ function deadlineStatus(dStr) {
 function toggleSection(id,cb) { document.getElementById(id).style.display = cb.checked?'block':'none'; }
 
 function render() {
-  if(typeof renderWeeklyTimetable==='function')renderWeeklyTimetable();
+
 
   if(typeof renderDiarySpending==='function')renderDiarySpending();
   const y=cur.getFullYear(), m=cur.getMonth();

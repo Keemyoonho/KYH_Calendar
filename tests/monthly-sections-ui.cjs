@@ -108,7 +108,7 @@ const assert=require('node:assert/strict');
     for(const width of [1280,390,320])for(const theme of ['light','dark']){
       await page.setViewportSize({width,height:850});
       await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
-      for(const selector of ['#weeklyTimetable','.memo-row'])assert.equal(await page.locator(selector).evaluate(e=>e.scrollWidth<=e.clientWidth),true,`${selector} ${width} ${theme}`);
+      for(const selector of ['.today-dashboard','.memo-row'])assert.equal(await page.locator(selector).evaluate(e=>e.scrollWidth<=e.clientWidth),true,`${selector} ${width} ${theme}`);
       const panels=await page.locator('.memo-row > .memo-sub').evaluateAll(items=>items.map(e=>({width:e.getBoundingClientRect().width,y:e.getBoundingClientRect().y})));
       const buys=await page.locator('#buyList > li').evaluateAll(items=>items.map(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y})));
       if(width===1280){assert.ok(panels[1].width>panels[0].width*1.8);assert.equal(buys[0].y,buys[1].y);assert.ok(buys[1].x>buys[0].x);}
