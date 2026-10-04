@@ -104,9 +104,6 @@ let transactions = [];
 let monthlyBudgets = {};
 let monthlyBuyLists = {};
 let fixedExpenses = [];
-let dietRecords = {};
-let dietSelectedDate = '';
-let dietFormDirty = false;
 let cur = new Date();
 let detailDate = '';
 let editIdx = -1;
@@ -161,6 +158,27 @@ async function purgeRetiredMonthlyGoals(data) {
   } finally {legacyGoalsDeleting=false;}
 }
 
+
+let retiredTrackingDeleting=false;
+async function purgeRetiredTracking(data) {
+  if(!canSync()||retiredTrackingDeleting)return;
+  // Explicitly retired sections only. Diary meals/checklist and events stay intact.
+  try {localStorage.removeItem('yoonho_diet_records');} catch(e) {}
+  if(!data||(!Object.hasOwn(data,'dietRecords')&&!Object.hasOwn(data,'goalTracker'))) {
+    document.body.dataset.retiredTracking='deleted';return;
+  }
+  retiredTrackingDeleting=true;
+  document.body.dataset.retiredTracking='deleting';
+  try {
+    await DATA_REF.update({dietRecords:null,goalTracker:null});
+    document.body.dataset.retiredTracking='deleted';
+    setSyncStatus('ok','이전 다이어트·목표 기록 삭제 완료');
+  } catch(e) {
+    document.body.dataset.retiredTracking='failed';
+    setSyncStatus('err','이전 다이어트·목표 기록 삭제 실패 — 새로고침해 다시 시도해 주세요.');
+  } finally {retiredTrackingDeleting=false;}
+}
+
 function startRealtimeSync() {
   if(!isCalendarOwner())return;
   const epoch=authEpoch;
@@ -176,7 +194,7 @@ function startRealtimeSync() {
       transactions = Array.isArray(data.transactions) ? data.transactions : [];
       monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
       fixedExpenses = Array.isArray(data.fixedExpenses) ? data.fixedExpenses : [];
-      dietRecords = data.dietRecords && typeof data.dietRecords === 'object' ? data.dietRecords : {};
+
       buySlots = normalizeBuySlots(data);
       loadMonthlySections(data);
       if (curBuySlot >= BUY_SLOT_COUNT) curBuySlot = 0;
@@ -192,7 +210,7 @@ function startRealtimeSync() {
       }
     } else {
       events = []; todos = [];
-      transactions = []; monthlyBudgets = {}; fixedExpenses = []; dietRecords = {};
+      transactions = []; monthlyBudgets = {}; fixedExpenses = [];
       buySlots = makeBuySlots();
       slots = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
     }
@@ -201,12 +219,14 @@ function startRealtimeSync() {
     renderBuySlot();
     syncReady=true;document.body.classList.remove('auth-locked');
     receiveDiary(data||{});
-    if(typeof receiveGoalTracker==='function')receiveGoalTracker(data||{});
+    if(typeof receiveWeeklyTimetable==='function')receiveWeeklyTimetable(data||{});
+
     render();
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
     saveLocal();
     purgeRetiredMonthlyGoals(data);
+    purgeRetiredTracking(data);
   }, (error) => {
     if(epoch!==authEpoch)return;
     lockCalendar('데이터 접근이 거부되었거나 연결에 실패했습니다. 본인 전용 Firebase 규칙을 확인해 주세요.');
@@ -226,7 +246,8 @@ function pushToFirebase() {
     monthlyBuyLists,
     monthlySectionsVersion: 1,
     fixedExpenses,
-    dietRecords,
+    dietRecords: null,
+    goalTracker: null,
     buySlots,
     slots,
     quickMemo: document.getElementById('quickMemo').value,
@@ -267,7 +288,7 @@ function saveLocal() {
     localStorage.setItem('yoonho_transactions', JSON.stringify(transactions));
     localStorage.setItem('yoonho_monthly_budgets', JSON.stringify(monthlyBudgets));
     localStorage.setItem('yoonho_fixed_expenses', JSON.stringify(fixedExpenses));
-    localStorage.setItem('yoonho_diet_records', JSON.stringify(dietRecords));
+
     localStorage.setItem('yoonho_buySlots', JSON.stringify(buySlots));
     localStorage.setItem('yoonho_slots', JSON.stringify(slots));
     localStorage.setItem('yoonho_quickMemo', document.getElementById('quickMemo').value);
@@ -281,7 +302,7 @@ function loadLocal() {
   try { transactions = JSON.parse(localStorage.getItem('yoonho_transactions') || '[]'); } catch(e) { transactions = []; }
   try { monthlyBudgets = JSON.parse(localStorage.getItem('yoonho_monthly_budgets') || '{}'); } catch(e) { monthlyBudgets = {}; }
   try { fixedExpenses = JSON.parse(localStorage.getItem('yoonho_fixed_expenses') || '[]'); } catch(e) { fixedExpenses = []; }
-  try { dietRecords = JSON.parse(localStorage.getItem('yoonho_diet_records') || '{}'); } catch(e) { dietRecords = {}; }
+
   try {
     const b = JSON.parse(localStorage.getItem('yoonho_buySlots'));
     if (Array.isArray(b)) buySlots = normalizeBuySlots({buySlots:b});
@@ -618,54 +639,6 @@ function renderDashboard() {
 
 function openPinnedEvent(dateStr){openDetailModal({stopPropagation(){}},dateStr);}
 
-function renderDietTracker() {
-  const prefix=currentMonthKey();
-  if(!dietSelectedDate.startsWith(prefix+'-')) {
-    dietSelectedDate=todayStr().startsWith(prefix+'-')?todayStr():prefix+'-01';
-    dietFormDirty=false;
-  }
-  document.getElementById('dietTrackerTitle').textContent=`🥗 ${cur.getFullYear()}년 ${cur.getMonth()+1}월 다이어트 기록`;
-  document.getElementById('dietDate').value=dietSelectedDate;
-  const todayRecord=dietRecords[dietSelectedDate]||{};
-  const fields=[['dietWeight','weight'],['dietWater','water'],['dietWorkout','workout'],['dietMeal','meal']];
-  if(!dietFormDirty) fields.forEach(([id,key])=>{document.getElementById(id).value=todayRecord[key]??'';});
-  const monthRecords=Object.entries(dietRecords).filter(([date])=>isSafeCalendarDate(date)&&date.startsWith(prefix)).sort(([a],[b])=>a.localeCompare(b));
-  const weights=monthRecords.filter(([,record])=>Number(record.weight)>0).map(([,record])=>Number(record.weight));
-  const workout=monthRecords.reduce((sum,[,record])=>sum+(Number(record.workout)||0),0);
-  const waters=monthRecords.filter(([,record])=>record.water!=='' && record.water!=null && Number.isFinite(Number(record.water))).map(([,record])=>Number(record.water));
-  document.getElementById('dietWeightChange').textContent=weights.length>=2 ? `${weights.at(-1)-weights[0]>=0?'+':''}${(weights.at(-1)-weights[0]).toFixed(1)}kg` : (weights.length?'기준 기록 1개':'기록 없음');
-  document.getElementById('dietWorkoutTotal').textContent=`${workout.toLocaleString('ko-KR')}분`;
-  document.getElementById('dietWaterAverage').textContent=waters.length?`${(waters.reduce((a,b)=>a+b,0)/waters.length).toFixed(1)}잔`:'0잔';
-  const recent=[...monthRecords].reverse();
-  document.getElementById('dietRecent').innerHTML=recent.length?recent.map(([date,record])=>
-    `<button type="button" class="diet-day${date===dietSelectedDate?' selected':''}" onclick="selectDietDate('${date}')" aria-label="${date} 기록 수정" aria-pressed="${date===dietSelectedDate}"><strong>${fmtDate(date)}</strong>${record.weight?`⚖️ ${Number(record.weight)}kg<br>`:''}${record.water!==''&&record.water!=null?`💧 ${Number(record.water)}잔<br>`:''}${record.workout!==''&&record.workout!=null?`🏃 ${Number(record.workout)}분<br>`:''}${record.meal?`🥗 ${escapeHtml(record.meal)}`:''}</button>`
-  ).join(''):'<div class="panel-hint">선택한 달에 저장된 기록이 없어요. 날짜를 골라 첫 기록을 남겨보세요.</div>';
-}
-
-function selectDietDate(date) {
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || dateString(parseLocalDate(date))!==date){document.getElementById('dietDate').value=dietSelectedDate;return;}
-  if(dietFormDirty && !confirm('저장하지 않은 입력을 버리고 다른 날짜로 이동할까요?')){document.getElementById('dietDate').value=dietSelectedDate;return;}
-  dietSelectedDate=date;dietFormDirty=false;
-  if(!date.startsWith(currentMonthKey()+'-')) {cur=parseLocalDate(date);cur.setDate(1);render();}
-  else renderDietTracker();
-}
-
-function saveDietRecord() {
-  const date=dietSelectedDate;
-  if(!date || document.getElementById('dietDate').value!==date)return;
-  for(const id of ['dietWeight','dietWater','dietWorkout'])if(!document.getElementById(id).reportValidity())return;
-  const numberValue=id=>document.getElementById(id).value===''?'':Number(document.getElementById(id).value);
-  const record={
-    weight:numberValue('dietWeight'),
-    water:numberValue('dietWater'),
-    workout:numberValue('dietWorkout'),
-    meal:document.getElementById('dietMeal').value.trim(),
-  };
-  if(Object.values(record).some(value=>value!==''))dietRecords[date]=record;
-  else {if(dietRecords[date]&&!confirm('입력이 비어 있습니다. 선택한 날짜의 기록을 삭제할까요?'))return;delete dietRecords[date];}
-  dietFormDirty=false;saveLocal();renderDietTracker();renderDashboard();pushToFirebase();
-}
-
 function renderLedgerStats() {
   const year=cur.getFullYear(),month=cur.getMonth();
   const entries=getLedgerEntriesForMonth(year,month).filter(entry=>entry.type==='expense');
@@ -800,7 +773,7 @@ function escapeHtml(value='') {
 }
 
 function openLedgerDetailModal(e, dateStr) {
-  if(typeof selectGoalDate==='function')selectGoalDate(dateStr);
+
   e.stopPropagation();
   ledgerDetailDateValue = dateStr;
   const parts = dateStr.split('-');
@@ -842,7 +815,7 @@ function renderLedgerDetail(dateStr) {
     <button class="btn-expense" onclick="openTransactionFromDetail('expense','${dateStr}')">− 지출 추가</button>
     <button class="btn-income" onclick="openTransactionFromDetail('income','${dateStr}')">+ 수입 추가</button>
   </div>`;
-  if(typeof goalHistoryHtml==='function')html=goalHistoryHtml(dateStr)+html;
+
   document.getElementById('ledgerDetailBody').innerHTML = html;
 }
 
@@ -886,13 +859,14 @@ function deadlineStatus(dStr) {
 function toggleSection(id,cb) { document.getElementById(id).style.display = cb.checked?'block':'none'; }
 
 function render() {
-  if(typeof renderGoalTracker==='function')renderGoalTracker();
+  if(typeof renderWeeklyTimetable==='function')renderWeeklyTimetable();
+
   if(typeof renderDiarySpending==='function')renderDiarySpending();
   const y=cur.getFullYear(), m=cur.getMonth();
   document.getElementById('monthLabel').textContent=`${y}년 ${m+1}월`;
   renderLedgerSummary();
   renderDashboard();
-  renderDietTracker();
+
   renderBuySlot();
   renderLedgerStats();
   renderFixedExpenses();
@@ -922,12 +896,12 @@ function render() {
       if(dayExpense){cls+=' has-expense-summary';expenseFooter=`<div class="schedule-expense-summary">−${formatWon(dayExpense)}</div>`;}
       clickHandler=`openDetailModal(event,'${dateStr}')`;
     }
-    if(typeof goalBadge==='function')badges+=goalBadge(dateStr);
+
     html+=`<div class="${cls}" onclick="${clickHandler}"><div class="day-num">${day}</div><div class="events">${badges}</div>${expenseFooter}</div>`;
   }
   document.getElementById('daysGrid').innerHTML=html;
 }
-function changeMonth(d){if(dietFormDirty&&!confirm('저장하지 않은 다이어트 입력을 버리고 다른 달로 이동할까요?'))return;cur.setDate(1);cur.setMonth(cur.getMonth()+d);render();}
+function changeMonth(d){cur.setDate(1);cur.setMonth(cur.getMonth()+d);render();}
 
 function openAddModal(date,idx,originalDate=''){
   editIdx=(idx!==undefined)?idx:-1;const isEdit=editIdx>=0;
@@ -951,7 +925,7 @@ function closeAddModal(){document.getElementById('addOverlay').classList.remove(
 function closeAddOutside(e){if(e.target.id==='addOverlay')closeAddModal();}
 
 function saveEvent(){
-  if(typeof ensureGoalEventIds==='function')ensureGoalEventIds();
+
   const title=document.getElementById('evtTitle').value.trim();const date=document.getElementById('evtDate').value;
   if(!title){document.getElementById('evtTitle').focus();return;}if(!date){document.getElementById('evtDate').focus();return;}
   const ut=document.getElementById('useTime').checked,ud=document.getElementById('useDeadline').checked,ul=document.getElementById('useLink').checked;
@@ -979,7 +953,7 @@ function saveEvent(){
 }
 
 function openDetailModal(e,dateStr){
-  if(typeof selectGoalDate==='function')selectGoalDate(dateStr);
+
   e.stopPropagation();detailDate=dateStr;
   const parts=dateStr.split('-');const d=new Date(+parts[0],+parts[1]-1,+parts[2]);
   const days=['일','월','화','수','목','금','토'];
@@ -1005,7 +979,7 @@ function renderDetail(dateStr){
     </div>`;
   });
   html+=`<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
-  if(typeof goalHistoryHtml==='function')html=goalHistoryHtml(dateStr)+html;
+
   document.getElementById('detailBody').innerHTML=html;
 }
 

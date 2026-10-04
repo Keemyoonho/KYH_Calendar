@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" referrerpolicy="no-referrer" href="https://fonts.googleapis.com/css2?family=Grand+Hotel&amp;display=swap&amp;text=Keemyoonho">
-<link rel="stylesheet" href="./css/styles.css?v=20260920-goal-editor">
+<link rel="stylesheet" href="./css/styles.css?v=20261004-weekly">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -73,7 +73,7 @@
     </div>
   </div>
 
-  <section class="today-dashboard" aria-label="오늘의 대시보드">
+  <section class="today-dashboard dashboard-with-timetable" aria-label="오늘의 대시보드">
     <div class="dashboard-grid">
       <div class="dashboard-card">
         <div class="dashboard-label">&#128197; 오늘 일정</div>
@@ -96,26 +96,34 @@
         <div class="dashboard-sub" id="todayDdaySub">예정된 마감이 없어요</div>
       </div>
     </div>
+
+    <section class="weekly-timetable" id="weeklyTimetable" aria-labelledby="timetableHeading">
+      <div class="timetable-heading"><h2 id="timetableHeading">요일별 시간표</h2><span>MY WEEKLY ROUTINE</span></div>
+      <div id="timetableWeekdays" class="timetable-weekdays" aria-label="시간표 요일"></div>
+      <div class="timetable-stage">
+        <svg id="timetableDial" viewBox="0 0 400 340" role="img" aria-label="24시간 원형 시간표"></svg>
+        <div class="timetable-caption"><strong id="timetableDayLabel"></strong><span id="timetableTotal"></span></div>
+      </div>
+      <details class="timetable-settings" id="timetableSettings">
+        <summary>시간 설정 <span id="timetableCount">0개</span></summary>
+        <ul id="timetableList" class="timetable-list" aria-label="선택한 요일의 시간대"></ul>
+        <form id="timetableForm" onsubmit="event.preventDefault();saveTimetableBlock()">
+          <fieldset id="timetableFields">
+            <label for="timetableTitle">할 일<input id="timetableTitle" maxlength="80" required placeholder="예: 전공 공부" /></label>
+            <div class="timetable-times">
+              <label for="timetableStart">시작<input id="timetableStart" type="time" required value="09:00" /></label>
+              <label for="timetableEnd">종료<input id="timetableEnd" type="time" required value="10:00" /></label>
+            </div>
+            <p class="panel-hint">종료가 시작보다 빠르면 다음 날까지 이어집니다.</p>
+            <div class="timetable-actions"><button class="todo-add-btn" id="timetableSave" type="submit">추가</button><button class="goal-edit" id="timetableCancel" type="button" onclick="resetTimetableEditor()" hidden>수정 취소</button></div>
+          </fieldset>
+        </form>
+      </details>
+      <p id="timetableStatus" role="status" aria-live="polite"></p>
+    </section>
+
   </section>
 
-  <section class="feature-panel goal-tracker" id="goalTracker" aria-labelledby="goalTrackerTitle">
-    <div class="panel-title" id="goalTrackerTitle">🎯 목표 달성</div>
-    <div class="goal-date-row"><input type="date" id="goalDate" aria-label="확인 날짜" onchange="selectGoalDate(this.value)" /><button type="button" class="goal-edit" onclick="openGoalDate(goalToday())">오늘</button><span id="goalProgress" class="goal-progress" role="status"></span></div>
-    <div id="goalActiveSlogans" aria-label="진행 중인 슬로건"></div>
-    <ul id="goalChecklist" class="goal-checklist" aria-label="날짜별 목표 체크리스트"></ul>
-    <p id="goalSaveStatus" class="panel-hint" role="status"></p>
-    <details class="goal-settings"><summary>슬로건 · 기간 · 목표 설정</summary>
-      <div id="goalPlanList"></div>
-      <form onsubmit="event.preventDefault();createGoalPlan()">
-        <div class="mini-field"><label for="goalSlogan">슬로건</label><input id="goalSlogan" maxlength="150" placeholder="매일 조금씩, 꾸준히 성장하기" required /></div>
-        <div class="goal-period"><div class="mini-field"><label for="goalStart">시작일</label><input id="goalStart" type="date" required /></div><div class="mini-field"><label for="goalEnd">종료일 (포함)</label><input id="goalEnd" type="date" required /></div></div>
-        <div class="mini-field"><label for="goalTaskInput">기간 동안 매일 수행할 목표</label><div class="todo-input-row"><input id="goalTaskInput" maxlength="300" placeholder="목표 입력…" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addGoalDraft();}" /><button id="goalTaskAdd" type="button" class="todo-add-btn" onclick="addGoalDraft()">추가</button></div></div>
-        <ul id="goalDraftList" class="goal-draft-list" aria-label="추가할 목표 목록"></ul>
-        <button id="goalCreate" class="todo-add-btn" type="submit">목표 시작</button>
-        <button id="goalEditCancel" class="goal-edit" type="button" onclick="cancelGoalEdit()" hidden>수정 취소</button>
-      </form>
-    </details>
-  </section>
 
   <div class="important-strip" id="importantStrip" aria-label="중요 일정"></div>
 
@@ -172,7 +180,7 @@
     <div class="panel-head"><div><div class="panel-title" id="diaryHeading">📝 날짜를 눌러 하루를 기록하세요</div><div class="panel-hint" id="diaryCloudStatus">본인 계정으로 저장·동기화합니다. ‘서버 저장 완료’를 확인한 뒤 브라우저 데이터를 삭제해 주세요.</div></div></div>
     <button type="button" class="goal-edit" onclick="retryDiary()">저장 재시도</button>
     <div id="diaryEditor" hidden>
-      <div id="diaryGoalHistory"></div>
+
       <div class="panel-hint" id="diarySchedule"></div>
       <div class="mini-field"><label for="diaryTitle">하루 제목</label><input id="diaryTitle" placeholder="오늘을 한 문장으로 표현한다면?" oninput="saveDiary()" /></div>
       <div class="mini-field"><label for="diaryMood">오늘의 기분</label><select id="diaryMood" onchange="saveDiary()"><option value="">선택 안 함</option><option value="😊">😊 좋음</option><option value="😐">😐 보통</option><option value="😔">😔 아쉬움</option><option value="😴">😴 피곤함</option></select></div>
@@ -199,25 +207,6 @@
     <button class="btn-money btn-income" type="button" onclick="openTransactionModal('income')">+ 수입 추가</button>
   </div>
 
-  <section class="feature-panel schedule-extra" id="dietTracker">
-    <div class="panel-head">
-      <div><div class="panel-title" id="dietTrackerTitle">&#129367; 월별 다이어트 기록</div><div class="panel-hint">달력에서 선택한 달의 기록입니다. 날짜나 기록 카드를 선택해 입력·수정하세요.</div></div>
-    </div>
-    <div class="mini-field diet-date"><label for="dietDate">기록 날짜</label><input id="dietDate" type="date" onchange="selectDietDate(this.value)" /></div>
-    <div class="diet-form" oninput="dietFormDirty=true">
-      <div class="mini-field"><label for="dietWeight">체중 (kg)</label><input id="dietWeight" type="number" min="0" step="0.1" placeholder="예: 72.5" /></div>
-      <div class="mini-field"><label for="dietWater">물 (잔)</label><input id="dietWater" type="number" min="0" step="1" placeholder="예: 8" /></div>
-      <div class="mini-field"><label for="dietWorkout">운동 (분)</label><input id="dietWorkout" type="number" min="0" step="1" placeholder="예: 45" /></div>
-      <div class="mini-field"><label for="dietMeal">식단 메모</label><input id="dietMeal" type="text" placeholder="예: 저탄수 고단백" /></div>
-      <button class="mini-save" type="button" onclick="saveDietRecord()">기록 저장</button>
-    </div>
-    <div class="diet-stats">
-      <div class="diet-stat"><div class="diet-stat-label">선택한 달 체중 변화</div><div class="diet-stat-value" id="dietWeightChange">기록 없음</div></div>
-      <div class="diet-stat"><div class="diet-stat-label">선택한 달 운동</div><div class="diet-stat-value" id="dietWorkoutTotal">0분</div></div>
-      <div class="diet-stat"><div class="diet-stat-label">평균 물 섭취</div><div class="diet-stat-value" id="dietWaterAverage">0잔</div></div>
-    </div>
-    <div class="diet-recent" id="dietRecent"></div>
-  </section>
 
   <section class="feature-panel ledger-extra" id="ledgerStatsPanel">
     <div class="panel-head"><div><div class="panel-title">&#128202; 월간 지출 통계</div><div class="panel-hint">반복 지출과 고정비를 포함한 이번 달 분석</div></div></div>
@@ -429,9 +418,9 @@
   </div>
 </div>
 
-<script src="./js/goals.js?v=20260921-plan-edit"></script>
-<script src="./js/diary.js?v=20260911-goals-compact"></script>
+<script src="./js/timetable.js?v=20261004-weekly"></script>
+<script src="./js/diary.js?v=20261004-weekly"></script>
 <script src="./js/security.js?v=20260911-persistent-login"></script>
-<script src="./js/app.js?v=20260920-money"></script>
+<script src="./js/app.js?v=20261004-weekly"></script>
 </body>
 </html>

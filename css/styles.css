@@ -645,3 +645,58 @@ html[data-theme] .diet-day.selected { outline-color: var(--glass-accent); }
  html[data-theme] .sync-bar { flex-wrap: wrap; gap: 6px; }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+
+/* Weekday routine: 2 × 2 summary cards and a sculpted, monochrome 24-hour dial. */
+.dashboard-with-timetable { display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); gap:18px; align-items:start; }
+.dashboard-with-timetable .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(128px,1fr)); gap:10px; align-self:stretch; max-height:520px; }
+.dashboard-with-timetable .dashboard-card { min-height:128px; display:flex; flex-direction:column; justify-content:center; padding:16px 12px; }
+.dashboard-with-timetable .dashboard-value { font-size:1.1rem; margin:5px 0; }
+.weekly-timetable { min-width:0; padding:16px; border:1px solid var(--glass-line); border-radius:16px; background:var(--glass-inset); }
+.timetable-heading { display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:space-between; align-items:center; }
+.timetable-heading h2 { font-size:.9rem; font-weight:700; }
+.timetable-heading>span { font-size:.55rem; letter-spacing:.12em; color:var(--glass-muted); }
+.timetable-weekdays { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-top:14px; }
+.timetable-weekdays button { min-height:32px; padding:5px 0; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--glass-muted); cursor:pointer; font:inherit; font-size:.75rem; }
+.timetable-weekdays button[aria-pressed=true] { background:var(--glass-accent); color:var(--glass-on); box-shadow:0 3px 10px #0002; }
+.timetable-stage { position:relative; text-align:center; }
+#timetableDial { display:block; width:100%; max-width:320px; margin:0 auto; overflow:visible; }
+.timetable-empty-ring { fill:var(--glass-hover); stroke:var(--glass-line); }
+.timetable-sector path { stroke:var(--glass-solid); stroke-width:1.2px; }
+.timetable-sector:hover path { filter:brightness(1.25); }
+.timetable-ticks line { stroke:var(--glass-muted); stroke-width:1px; opacity:.6; }
+.timetable-ticks text { fill:var(--glass-muted); font-size:10px; text-anchor:middle; dominant-baseline:middle; }
+.timetable-center { fill:var(--glass-text); font-size:40px; font-weight:600; text-anchor:middle; }
+.timetable-center-sub { fill:var(--glass-muted); font-size:10px; letter-spacing:3px; text-anchor:middle; }
+.timetable-sector-label { fill:#fff; font-size:12px; font-weight:600; text-anchor:middle; dominant-baseline:middle; }
+.timetable-caption { margin:-12px 0 14px; }
+.timetable-caption strong { display:block; font-size:.85rem; }
+.timetable-caption span { display:block; margin-top:5px; color:var(--glass-muted); font-size:.65rem; }
+.timetable-list { list-style:none; display:grid; gap:7px; max-height:190px; overflow-y:auto; margin:10px 0; }
+.timetable-list:empty { display:none; }
+.timetable-list li { display:flex; gap:8px; align-items:center; padding:7px; border:1px solid var(--glass-line); border-radius:9px; min-width:0; }
+.timetable-number { background:rgb(var(--tone),var(--tone),var(--tone)); color:white; width:23px; height:23px; display:grid; place-items:center; border-radius:7px; font-size:.65rem; flex-shrink:0; }
+.timetable-list li>div { flex:1; min-width:0; }
+.timetable-list strong { display:block; font-size:.75rem; overflow-wrap:anywhere; }
+.timetable-list small { display:block; font-size:.63rem; color:var(--glass-muted); margin-top:3px; }
+.timetable-list button { font-size:.67rem; padding:6px 2px; }
+.timetable-settings { border-top:1px solid var(--glass-line); padding-top:11px; }
+.timetable-settings summary { cursor:pointer; font-size:.75rem; font-weight:600; }
+.timetable-settings summary span { float:right; font-weight:400; color:var(--glass-muted); }
+#timetableFields { border:0; padding:12px 0 0; min-width:0; }
+#timetableFields label { display:block; font-size:.7rem; color:var(--glass-muted); }
+#timetableFields input { display:block; width:100%; min-width:0; border:1px solid var(--glass-line); border-radius:8px; padding:9px; margin:5px 0 10px; font:inherit; font-size:.8rem; }
+.timetable-times { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.timetable-times label { min-width:0; }
+.timetable-actions { display:flex; align-items:center; gap:12px; margin-top:12px; }
+#timetableStatus { font-size:.7rem; line-height:1.5; margin-top:10px; color:var(--glass-muted); }
+#timetableStatus:empty { display:none; }
+.weekly-timetable button:disabled { opacity:.45; cursor:wait; }
+@media(max-width:700px) {
+ .dashboard-with-timetable { grid-template-columns:1fr; gap:12px; }
+ .dashboard-with-timetable .dashboard-grid { grid-template-rows:repeat(2,minmax(88px,1fr)); }
+ .dashboard-with-timetable .dashboard-card { min-height:88px; padding:12px; }
+ .dashboard-with-timetable .dashboard-value { font-size:.95rem; margin:2px 0; }
+ .weekly-timetable { padding:12px; }
+ #timetableDial { max-width:330px; }
+ #timetableFields input { font-size:16px; }
+}

@@ -40,7 +40,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await page.locator('#monthlyBudgetInput').inputValue(),'2,500,000');
   await page.locator('#monthlyBudgetInput').fill('');await page.locator('#monthlyBudgetInput').press('Tab');
   assert.equal(await page.evaluate(()=>monthlyBudgets[currentMonthKey()]),undefined);
-  assert.equal(await page.locator('#dietWeight').getAttribute('type'),'number');
+  assert.equal(await page.locator('#fixedExpenseDay').getAttribute('type'),'number');
   for(const width of [1280,390,320])for(const theme of ['light','dark']){
    await page.setViewportSize({width,height:900});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
    assert.equal(await page.locator('.app').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
