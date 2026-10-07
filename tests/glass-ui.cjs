@@ -43,10 +43,13 @@ const assert=require('node:assert/strict');
       assert.equal(await page.locator('.app').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
       assert.equal(await page.locator('#weeklyTimetable,#goalTracker,#dietTracker').count(),0);
       const cards=await page.locator('.dashboard-card').all();
-      assert.equal(cards.length,4);
+      assert.equal(cards.length,3);
+      assert.equal(await page.locator('#todayTodoValue,#todayTodoSub').count(),0);
+      assert.match(await page.locator('#todoList').textContent(),/읽고 싶은 책 정리/);
+      assert.deepEqual(await page.evaluate(()=>todos),[{text:'읽고 싶은 책 정리',done:false}]);
       const boxes=await Promise.all(cards.map(card=>card.boundingBox()));
-      if(width===1280)assert.ok(boxes.every(box=>box.y===boxes[0].y),'four summary cards in one row');
-      else {assert.equal(boxes[0].y,boxes[1].y);assert.equal(boxes[2].y,boxes[3].y);assert.ok(boxes[2].y>boxes[0].y);}
+      if(width===1280)assert.ok(boxes.every(box=>box.y===boxes[0].y),'three summary cards in one row');
+      else {assert.equal(boxes[0].y,boxes[1].y);assert.ok(boxes[2].y>boxes[0].y);assert.ok(boxes[2].width>boxes[0].width);}
       const colors=await page.locator('body,.header,.calendar,.mode-btn.active,.panel-title').evaluateAll(nodes=>nodes.map(e=>getComputedStyle(e).color));
       for(const color of colors){const nums=color.match(/\d+/g).map(Number);assert.equal(nums[0],nums[1]);assert.equal(nums[1],nums[2]);}
       if(width!==320)await page.screenshot({path:path.join(root,'tests','glass-'+theme+'-'+width+'.png'),fullPage:true});

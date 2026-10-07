@@ -606,13 +606,10 @@ function renderDashboard() {
   const todayEvents=getEventsForDate(today).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
   const todayExpenses=getLedgerEntriesForDate(today).filter(entry=>entry.type==='expense');
   const expenseTotal=todayExpenses.reduce((sum,entry)=>sum+(Number(entry.amount)||0),0);
-  const pending=todos.filter(todo=>!todo.done);
   document.getElementById('todayScheduleValue').textContent=`${todayEvents.length}개`;
   document.getElementById('todayScheduleSub').textContent=todayEvents.length ? todayEvents.slice(0,2).map(event=>event.title).join(' · ') : '등록된 일정이 없어요';
   document.getElementById('todayExpenseValue').textContent=formatWon(expenseTotal);
   document.getElementById('todayExpenseSub').textContent=todayExpenses.length ? `${todayExpenses.length}건의 지출` : '지출 내역이 없어요';
-  document.getElementById('todayTodoValue').textContent=`${pending.length}개`;
-  document.getElementById('todayTodoSub').textContent=pending.length ? pending.slice(0,2).map(todo=>todo.text).join(' · ') : '모두 완료했어요';
 
   const candidates=events.map((event,i)=>{
     const target=event.deadline || nextOccurrence(event,today);
