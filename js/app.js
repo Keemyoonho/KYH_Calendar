@@ -99,6 +99,8 @@ let slots  = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
 // buySlots: 각 슬롯이 {title, items:[{text,done}]}
 let buySlots = Array.from({length: BUY_SLOT_COUNT}, () => ({ title: '', items: [] }));
 let events = [];
+let eventChecks = {};
+const eventChecksBusy = new Set();
 let todos  = [];
 let transactions = [];
 let monthlyBudgets = {};
@@ -187,6 +189,7 @@ function startRealtimeSync() {
   DATA_REF.on('value', (snapshot) => {
     if(epoch!==authEpoch||!isCalendarOwner())return;
     const data = snapshot.val();
+    eventChecks = data?.eventChecks && typeof data.eventChecks==='object' ? data.eventChecks : {};
     isRemoteUpdate = true;
     if (data) {
       events = Array.isArray(data.events) ? data.events : [];
@@ -219,6 +222,7 @@ function startRealtimeSync() {
     renderBuySlot();
     syncReady=true;document.body.classList.remove('auth-locked');
     receiveDiary(data||{});
+    if(detailDate)renderDetail(detailDate);
 
 
     render();
@@ -522,6 +526,7 @@ function eventOccurrencesOn(event,dateStr) {
 }
 
 function updateEventRepeatUI() {
+  document.getElementById('evtChecklistRow').hidden=document.getElementById('evtRepeat').value==='none';
   document.getElementById('eventRepeatOptions').hidden=!!editOccurrence;
   document.getElementById('evtWeekdays').hidden=document.getElementById('evtRepeat').value!=='weekly';
 }
@@ -888,7 +893,7 @@ function render() {
       clickHandler=`openLedgerDetailModal(event,'${dateStr}')`;
     }else{
       const dayEvts=getEventsForDate(dateStr).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
-      badges=dayEvts.map(e=>{const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' \u26A0':'';const t=e.start?` ${fmtTime(e.start)}`:'';const flags=`${e.pinned?'📌 ':''}${e.repeat&&e.repeat!=='none'?'↻ ':''}`;return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${flags}${escapeHtml(e.title)}${t}${warn}</div>`;}).join('');
+      badges=dayEvts.map(e=>{const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' \u26A0':'';const t=e.start?` ${fmtTime(e.start)}`:'';const flags=`${hasEventChecklist(e)?(isEventChecked(e)?'✓ ':'☐ '):''}${e.pinned?'📌 ':''}${e.repeat&&e.repeat!=='none'?'↻ ':''}`;return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${flags}${escapeHtml(e.title)}${t}${warn}</div>`;}).join('');
       const dayExpense=getLedgerEntriesForDate(dateStr).filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       if(dayExpense){cls+=' has-expense-summary';expenseFooter=`<div class="schedule-expense-summary">−${formatWon(dayExpense)}</div>`;}
       clickHandler=`openDetailModal(event,'${dateStr}')`;
@@ -913,6 +918,7 @@ function openAddModal(date,idx,originalDate=''){
   const ud=!!(e.deadline);document.getElementById('useDeadline').checked=ud;document.getElementById('deadlineFields').style.display=ud?'block':'none';document.getElementById('evtDeadline').value=e.deadline||'';document.getElementById('evtDeadlineMemo').value=e.deadlineMemo||'';
   const ul=!!(e.link);document.getElementById('useLink').checked=ul;document.getElementById('linkFields').style.display=ul?'block':'none';document.getElementById('evtLink').value=e.link||'';document.getElementById('evtLinkLabel').value=e.linkLabel||'';
   document.getElementById('evtRepeat').value=e.repeat||'none';document.getElementById('evtRepeatEnd').value=e.repeatEnd||'';document.getElementById('evtPinned').checked=!!e.pinned;
+  document.getElementById('evtChecklist').checked=!!e.checklist;
   const selected=e.repeatDays?.length?e.repeatDays:[parseLocalDate(e.date||date||todayStr()).getDay()];
   document.querySelectorAll('#evtWeekdays input').forEach(input=>input.checked=selected.includes(Number(input.value)));
   updateEventRepeatUI();
@@ -943,6 +949,8 @@ function saveEvent(){
     events[editIdx]={...editSource,exceptions:{...editSource.exceptions,[editOccurrence]:change}};
   }else{
     obj.repeatDays=repeat==='weekly'?repeatDays:[];
+    obj.checklist=repeat!=='none'&&document.getElementById('evtChecklist').checked;
+    if(obj.checklist&&!editSource?.checkId)obj.checkId='evt_'+Array.from(crypto.getRandomValues(new Uint32Array(4)),n=>n.toString(16)).join('_');
     if(editIdx>=0)events[editIdx]={...editSource,...obj};else events.push(obj);
   }
   saveLocal();render();closeAddModal();if(detailDate)renderDetail(detailDate);
@@ -952,6 +960,7 @@ function saveEvent(){
 function openDetailModal(e,dateStr){
 
   e.stopPropagation();detailDate=dateStr;
+  document.getElementById('eventCheckStatus').textContent='';
   const parts=dateStr.split('-');const d=new Date(+parts[0],+parts[1]-1,+parts[2]);
   const days=['일','월','화','수','목','금','토'];
   document.getElementById('detailDate').textContent=`${+parts[1]}월 ${+parts[2]}일 (${days[d.getDay()]})`;
@@ -973,11 +982,37 @@ function renderDetail(dateStr){
       <div class="evt-actions">${e.repeat&&e.repeat!=='none'?`<button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}','${e._originalDate}')">이번 회차 수정</button><button class="evt-action-btn" onclick="cancelOccurrence(${e._i},'${e._originalDate}','${dateStr}')">이번 회차 취소</button>`:''}<button class="evt-action-btn" onclick="editEvent(${e._i},'${dateStr}')">${e.repeat&&e.repeat!=='none'?'전체 수정':'수정'}</button><button class="evt-action-btn" onclick="delEvent(${e._i},'${dateStr}')">${e.repeat&&e.repeat!=='none'?'전체 삭제':'삭제'}</button></div></div>
       ${e.repeat&&e.repeat!=='none'?`<div class="repeat-note">${eventRepeatLabel(events[e._i])}${e._changed?' · 이번 회차 변경됨':''}</div>`:''}
       <div class="evt-title">${escapeHtml(e.title)}</div>${timeHtml}${dlHtml}${e.memo?`<div class="evt-memo">\u{1F4CC} ${escapeHtml(e.memo)}</div>`:''}${linkHtml}
+      ${eventCheckHtml(e,dateStr)}
     </div>`;
   });
   html+=`<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
 
   document.getElementById('detailBody').innerHTML=html;
+}
+
+function hasEventChecklist(event){return !!event.checklist&&['weekly','monthly','yearly'].includes(event.repeat)&&/^evt_[a-f0-9_]+$/.test(event.checkId||'');}
+function isEventChecked(event){return eventChecks[event.checkId]?.[event._originalDate]===true;}
+function eventCheckHtml(event,date){
+  if(!hasEventChecklist(event))return '';
+  const done=isEventChecked(event),busy=eventChecksBusy.has(event.checkId+'/'+event._originalDate);
+  return `<label class="event-completion"><input type="checkbox" ${done?'checked':''} ${busy?'disabled':''} onchange="setEventCheck('${event.checkId}','${event._originalDate}','${date}',this.checked)" /><span>${done?'수행 완료':'수행했으면 체크'}${busy?' · 저장 중…':''}</span></label>`;
+}
+async function setEventCheck(id,original,date,done){
+  const key=id+'/'+original;
+  const status=document.getElementById('eventCheckStatus');
+  if(!canSync()){status.textContent='서버 연결과 로그인을 확인해 주세요.';if(detailDate)renderDetail(detailDate);return;}
+  const occurrence=getEventsForDate(date).find(e=>e.checkId===id&&e._originalDate===original&&hasEventChecklist(e));
+  if(!occurrence||eventChecksBusy.has(key)||!isSafeCalendarDate(original))return;
+  const epoch=authEpoch;
+  eventChecksBusy.add(key);status.textContent='저장 중…';if(detailDate)renderDetail(detailDate);
+  try{
+    // Separate subtree and original occurrence date preserve checks through moves and general event saves.
+    await DATA_REF.child('eventChecks/'+key).set(!!done);
+    if(epoch!==authEpoch||!canSync())return;
+    (eventChecks[id]||={})[original]=!!done;
+    status.textContent='서버 저장 완료';
+  }catch(error){if(epoch===authEpoch)status.textContent='저장 실패 — 연결 확인 후 다시 체크해 주세요.';}
+  finally{eventChecksBusy.delete(key);if(epoch===authEpoch&&canSync()){render();if(detailDate)renderDetail(detailDate);}}
 }
 
 function editEvent(idx,dateStr,originalDate=''){closeDetailModal();openAddModal(dateStr,idx,originalDate);}

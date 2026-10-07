@@ -646,3 +646,8 @@ html[data-theme] .diet-day.selected { outline-color: var(--glass-accent); }
  html[data-theme] .sync-bar { flex-wrap: wrap; gap: 6px; }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+.check-row[hidden] { display:none; }
+.event-completion { display:flex; align-items:center; gap:8px; margin-top:12px; padding:10px; border:1px solid var(--glass-line); border-radius:8px; font-size:.8rem; cursor:pointer; }
+.event-completion input { width:18px; height:18px; flex-shrink:0; }
+.event-check-status { padding:0 20px 12px; color:var(--glass-muted); font-size:.75rem; }
+.event-check-status:empty { display:none; }
