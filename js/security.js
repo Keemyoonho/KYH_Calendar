@@ -33,7 +33,7 @@ async function loginCalendar(){
   }
 }
 async function logoutCalendar(){
-  if((diarySaveFailed||diaryMigrationRunning)&&!confirm('저장 또는 이전이 완료되지 않은 일기가 있습니다. 완료 후 로그아웃해 주세요. 계속할까요?'))return;
+  if(typeof hasUnsavedDateNotes==='function'&&hasUnsavedDateNotes()&&!confirm('저장하지 않은 날짜 메모가 있습니다. 로그아웃하면 입력이 사라집니다. 계속할까요?'))return;
   authEpoch++;lockCalendar('로그아웃 중입니다.');
   try{await firebase.auth().signOut();location.reload();}catch(e){document.getElementById('authMessage').textContent='로그아웃 실패. 다시 시도해 주세요.';}
 }

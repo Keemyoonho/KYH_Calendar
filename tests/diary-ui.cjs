@@ -3,103 +3,66 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:'msedge'});
  try{
-  const root=path.join(__dirname,'..'),page=await browser.newPage();
-  await page.route('**/*',r=>r.abort());
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const root=path.join(__dirname,'..'),page=await browser.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await page.route('**/*',r=>r.abort());
+  await page.emulateMedia({reducedMotion:'reduce'});
   await page.setContent(fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
   await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/styles.css'),'utf8')});
   await page.addScriptTag({content:`
-   window.memory={'yoonho_private_diary_v1':JSON.stringify({'2026-09-01':{body:'local original'},'2026-09-02':{body:'local conflict'}})};
-   Object.defineProperty(window,'localStorage',{value:{getItem(k){return memory[k]||null},setItem(k,v){memory[k]=v}}});
-   window.cloud={diaryRecords:{'2026-09-02':{body:'remote original'}}};window.seq=0;window.fail=false;
-   window.refresh=()=>{};
-   function ref(p=[]){return {
-    child(key){return ref([...p,...key.split('/')])},
-    push(){return ref([...p,'backup'+(++seq)])},
-    off(){},on(){},
-    async set(v){if(fail)throw Error('offline');let t=cloud;for(const k of p.slice(0,-1))t=t[k]||(t[k]={});t[p.at(-1)]=v;refresh();},
-    async update(v){if(fail)throw Error('offline');Object.assign(cloud,v);refresh();},
-    async transaction(fn){if(fail)throw Error('offline');let t=cloud;for(const k of p.slice(0,-1))t=t[k]||(t[k]={});const k=p.at(-1),current=t[k]??null,next=fn(current);if(next!==undefined){t[k]=next;refresh();}return {committed:next!==undefined,snapshot:{val:()=>t[k]??null}};}
-   };}
-   window.firebase={initializeApp(){},database(){return {ref(){return ref()}}}};
-   window.canSync=()=>true;window.startSecurity=()=>document.body.classList.remove('auth-locked');
+   window.allowed=true;window.authEpoch=1;window.fail=false;
+   window.cloud={diaryRecords:{old:{body:'delete'}},diaryImports:{backup:'delete'},events:[{title:'keep'}],transactions:[{title:'keep money'}],eventChecks:{keep:true},dateNotes:{'2026-10-09':{text:'keep note'}}};
+   window.storage={yoonho_private_diary_v1:'old',yoonho_diary_pending_v2:'old',yoonho_diary_migrated_v2:'yes',yoonho_view_mode:'diary',other:'keep'};
+   Object.defineProperty(window,'localStorage',{value:{getItem(k){return storage[k]??null},setItem(k,v){storage[k]=v},removeItem(k){delete storage[k]}}});
+   const ref={off(){},on(){},async update(v){if(fail)throw Error('offline');for(const [k,value] of Object.entries(v)){if(value===null)delete cloud[k];else cloud[k]=value;}},child(p){return {async transaction(fn){if(fail)throw Error('offline');const [key,date]=p.split('/');cloud[key]||={};const next=fn(cloud[key][date]??null);if(next!==undefined)cloud[key][date]=next;return {committed:next!==undefined,snapshot:{val:()=>cloud[key][date]??null}};}}}};
+   window.firebase={initializeApp(){},database(){return {ref(){return ref}}}};
+   window.canSync=()=>allowed;window.startSecurity=()=>document.body.classList.remove('auth-locked');
   `});
-  await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/diary.js'),'utf8')});
-  await page.addScriptTag({content:fs.readFileSync(path.join(root,'js/app.js'),'utf8')});
-  await page.evaluate(()=>{refresh=()=>receiveDiary(cloud);receiveDiary(cloud);});
-  await page.waitForFunction(()=>diaryMigrationDone&&!diaryMigrationRunning);
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-01'].body),'local original');
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-02'].body),'remote original');
-  assert.equal(await page.evaluate(()=>Object.values(cloud.diaryImports)[0].records['2026-09-02'].body),'local conflict');
-  await page.getByRole('tab',{name:'📝 일기',exact:true}).click();
-  await page.evaluate(()=>openDiary('2026-09-03'));
-  await page.locator('#diaryBody').fill('cloud diary');
-  await page.locator('#diaryTitle').fill('기억할 하루');
-  await page.locator('.diary-extras summary').click();
-  for(const [id,text] of [['diaryHighlight','산책'],['diaryGratitude','친구'],['diaryTomorrow','힘내자'],['diaryMeals','아침: 달걀\n점심: 밥']])await page.locator('#'+id).fill(text);
-  await page.locator('#diaryMood').selectOption('😊');
-  await page.locator('#diaryTaskInput').fill('책 읽기');await page.locator('#diaryTaskInput').press('Enter');
-  await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'cloud diary');
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].tasks.length),1);
-  assert.equal(await page.locator('#diaryTasks input').isChecked(),false);
-  await page.locator('#diaryTasks input').check();
-  await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].tasks[0].done),true);
-  assert.match(await page.locator('#diaryTaskProgress').textContent(),/완료 1 \/ 1개/);
-  assert.equal(await page.locator('#diaryMeals').evaluate(e=>!!e.closest('details')),false);
-  await page.evaluate(()=>{
-   transactions=[{date:'2026-09-03',title:'점심',amount:9000,type:'expense',repeat:'none'},
-    {date:'2026-09-03',title:'용돈',amount:100000,type:'income',repeat:'none'},
-    {date:'2026-09-04',title:'다른 날',amount:3000,type:'expense',repeat:'none'},
-    {date:'2026-09-03',title:'<img src=x onerror=alert(1)>',memo:'<script>bad</script>',amount:1000,type:'expense',repeat:'none'}];
-   fixedExpenses=[{title:'구독',amount:5000,day:3,startDate:'2026-09-01',active:true}];render();
-  });
-  assert.match(await page.locator('#diarySpendingTotal').textContent(),/15,000원 · 3건/);
-  assert.equal(await page.locator('#diarySpending img,#diarySpending script').count(),0);
-  assert.ok(!(await page.locator('#diarySpending').textContent()).includes('용돈'));
-  await page.evaluate(()=>{transactions[0].amount=8000;render();});
-  assert.match(await page.locator('#diarySpendingTotal').textContent(),/14,000원/);
-  await page.evaluate(()=>{transactions.splice(0,1);render();});
-  assert.match(await page.locator('#diarySpendingTotal').textContent(),/6,000원/);
-  await page.evaluate(()=>pushToFirebase());
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'cloud diary');
-  // Simulate cleared browser storage / another device using only server data.
-  await page.evaluate(()=>{memory={};diaryRecords={};diaryPending={};receiveDiary(cloud);openDiary('2026-09-03');});
-  assert.equal(await page.locator('#diaryBody').inputValue(),'cloud diary');
-  assert.equal(await page.locator('#diaryMood').inputValue(),'😊');
-  assert.equal(await page.locator('#diaryTasks input').isChecked(),true);
-  assert.equal(await page.locator('#diaryTitle').inputValue(),'기억할 하루');
-  assert.equal(await page.locator('#diaryHighlight').inputValue(),'산책');
-  assert.equal(await page.locator('#diaryGratitude').inputValue(),'친구');
-  assert.equal(await page.locator('#diaryTomorrow').inputValue(),'힘내자');
-  assert.equal(await page.locator('#diaryMeals').inputValue(),'아침: 달걀\n점심: 밥');
-  await page.evaluate(()=>openDiary('2026-09-04'));
-  assert.equal(await page.locator('#diaryTitle').inputValue(),'');
-  assert.equal(await page.locator('#diaryTasks input').count(),0);
-  assert.match(await page.locator('#diarySpendingTotal').textContent(),/3,000원 · 1건/);
-  assert.equal(await page.locator('#diaryMeals').inputValue(),'');
-  await page.evaluate(()=>openDiary('2026-09-03'));
-  await page.evaluate(()=>{fail=true;});
-  await page.locator('#diaryBody').fill('pending text');
-  await page.waitForFunction(()=>diarySaveFailed&&!diaryInflight.size);
-  assert.match(await page.locator('#diarySaveStatus').textContent(),/미완료/);
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'cloud diary');
-  await page.evaluate(()=>{fail=false;retryDiary();});
-  await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'pending text');
-  // A concurrent server update must not be overwritten.
-  await page.evaluate(()=>{openDiary('2026-09-03');cloud.diaryRecords['2026-09-03']={body:'other device'};});
-  await page.locator('#diaryBody').fill('conflicting draft');
-  await page.waitForFunction(()=>!diarySaveFailed&&!diaryInflight.size);
-  assert.equal(await page.evaluate(()=>cloud.diaryRecords['2026-09-03'].body),'other device');
-  assert.ok(await page.evaluate(()=>Object.values(cloud.diaryImports).some(x=>x.records['2026-09-03']?.body==='conflicting draft')));
-  for(const width of [1280,390,320])for(const theme of ['light','dark']){
-   await page.setViewportSize({width,height:850});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
-   assert.equal(await page.locator('#diaryPanel').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
-   if(width===390&&theme==='dark'){await page.locator('#diaryMeals').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'tests','diary-enhanced-mobile.png')});}
-  }
+  for(const file of ['diary.js','app.js'])await page.addScriptTag({content:fs.readFileSync(path.join(root,'js',file),'utf8')});
   assert.deepEqual(errors,[]);
-  console.log('PASS: cloud migration/backup, date saves, browser clearing recovery, general-save preservation, offline retry, conflict backup, responsive themes');
+  assert.equal(await page.locator('#diaryPanel,#diaryModeBtn').count(),0);
+  assert.equal(await page.evaluate(()=>viewMode),'schedule');
+  const retained=await page.evaluate(()=>JSON.stringify([cloud.events,cloud.transactions,cloud.eventChecks,cloud.dateNotes]));
+  await page.evaluate(async()=>{allowed=false;await purgeRetiredDiary(cloud);});assert.ok(await page.evaluate(()=>cloud.diaryRecords));
+  await page.evaluate(async()=>{allowed=true;fail=true;await purgeRetiredDiary(cloud);});assert.equal(await page.locator('body').getAttribute('data-retired-diary'),'failed');
+  await page.evaluate(async()=>{fail=false;await purgeRetiredDiary(cloud);});
+  assert.equal(await page.evaluate(()=>cloud.diaryRecords||cloud.diaryImports),undefined);
+  assert.equal(await page.evaluate(()=>JSON.stringify([cloud.events,cloud.transactions,cloud.eventChecks,cloud.dateNotes])),retained);
+  assert.equal(await page.evaluate(()=>storage.yoonho_private_diary_v1||storage.yoonho_diary_pending_v2||storage.yoonho_diary_migrated_v2),undefined);
+  assert.equal(await page.evaluate(()=>storage.other),'keep');
+  await page.evaluate(()=>{receiveDateNotes(cloud);openDetailModal({stopPropagation(){}},'2026-10-10');});
+  await page.locator('#dateNoteText').fill('오늘 짧은 기록 <img src=x>');
+  await page.evaluate(()=>saveDateNote('2026-10-10'));
+  assert.match(await page.locator('#dateNoteStatus').textContent(),/서버 저장 완료/);
+  assert.equal(await page.evaluate(()=>cloud.dateNotes['2026-10-10'].text),'오늘 짧은 기록 <img src=x>');
+  await page.evaluate(()=>{dateNotes={};receiveDateNotes(cloud);openDetailModal({stopPropagation(){}},'2026-10-10');});
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'오늘 짧은 기록 <img src=x>');
+  assert.equal(await page.locator('#detailBody img').count(),0);
+  await page.locator('#dateNoteText').fill('입력 보존');
+  await page.evaluate(()=>{receiveDateNotes(cloud);renderDetail(detailDate);});
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'입력 보존');
+  assert.equal(await page.locator('#dateNoteText').evaluate(e=>document.activeElement===e),true);
+  await page.evaluate(()=>openDetailModal({stopPropagation(){}},'2026-10-11'));
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'');
+  await page.locator('#dateNoteText').fill('다른 날짜');await page.evaluate(()=>saveDateNote('2026-10-11'));
+  await page.evaluate(()=>openDetailModal({stopPropagation(){}},'2026-10-10'));
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'입력 보존');
+  await page.evaluate(async()=>{fail=true;await saveDateNote('2026-10-10');});
+  assert.match(await page.locator('#dateNoteStatus').textContent(),/저장 실패/);
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'입력 보존');
+  await page.evaluate(async()=>{fail=false;cloud.dateNotes['2026-10-10']={text:'다른 기기'};await saveDateNote('2026-10-10');});
+  assert.match(await page.locator('#dateNoteStatus').textContent(),/다른 기기/);
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'입력 보존');
+  await page.evaluate(()=>reloadDateNote('2026-10-10'));
+  assert.equal(await page.locator('#dateNoteText').inputValue(),'다른 기기');
+  await page.locator('#dateNoteText').fill('');await page.evaluate(()=>saveDateNote('2026-10-10'));
+  assert.equal(await page.evaluate(()=>cloud.dateNotes['2026-10-10']),null);
+  const saved=await page.evaluate(()=>JSON.stringify(cloud.dateNotes));
+  await page.evaluate(()=>pushToFirebase());assert.equal(await page.evaluate(()=>JSON.stringify(cloud.dateNotes)),saved);
+  for(const width of [1280,390,320])for(const theme of ['light','dark']){
+   await page.setViewportSize({width,height:900});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
+   assert.equal(await page.locator('#detailOverlay .detail-modal').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+   if(width===390)await page.screenshot({path:path.join(root,'tests','date-note-'+theme+'.png')});
+  }
+  assert.deepEqual(errors,[]);console.log('PASS: old diary purge and isolation, date notes CRUD, recovery, input preservation, conflict/offline handling, responsive themes');
  }finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1});
+})().catch(e=>{console.error(e);process.exitCode=1;});

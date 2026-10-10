@@ -651,3 +651,9 @@ html[data-theme] .diet-day.selected { outline-color: var(--glass-accent); }
 .event-completion input { width:18px; height:18px; flex-shrink:0; }
 .event-check-status { padding:0 20px 12px; color:var(--glass-muted); font-size:.75rem; }
 .event-check-status:empty { display:none; }
+.date-note-editor { margin-top:18px; padding-top:14px; border-top:1px solid var(--glass-line); }
+.date-note-editor label { font-size:.85rem; font-weight:600; }
+.date-note-editor textarea { display:block; width:100%; min-height:90px; max-height:220px; resize:vertical; margin:9px 0; padding:10px; border:1px solid var(--glass-line); border-radius:9px; font:inherit; font-size:16px; }
+.date-note-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.date-note-editor p { margin-top:8px; font-size:.7rem; color:var(--glass-muted); overflow-wrap:anywhere; }
+.date-note-badge { font-size:.65rem; color:var(--glass-muted); padding:3px; }
