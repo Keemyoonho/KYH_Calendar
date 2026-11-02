@@ -112,6 +112,7 @@ let editIdx = -1;
 let editOccurrence = '';
 let editSource = null;
 let editTransactionIdx = -1;
+let editTransactionSource = null;
 let editFixedExpenseIdx = -1;
 let ledgerDetailDateValue = '';
 let viewMode = ['ledger'].includes(localStorage.getItem('yoonho_view_mode')) ? localStorage.getItem('yoonho_view_mode') : 'schedule';
@@ -712,12 +713,45 @@ function setTransactionType(type, selectedCategory) {
   document.getElementById('transactionModalTitle').textContent = isEdit
     ? (safeType === 'income' ? '✏️ 수입 수정' : '✏️ 지출 수정')
     : (safeType === 'income' ? '💰 수입 추가' : '💳 지출 추가');
+  updateInstallmentUI();
+}
+
+function installmentParts(amount,date,months){
+  if(!Number.isSafeInteger(amount)||amount<months||!Number.isInteger(months)||months<2||months>60||!/^\d{4}-\d{2}-\d{2}$/.test(date))return [];
+  const [year,month,day]=date.split('-').map(Number);
+  if(dateString(new Date(year,month-1,day))!==date)return [];
+  const base=Math.floor(amount/months),remainder=amount%months;
+  return Array.from({length:months},(_,i)=>{
+    const target=new Date(year,month-1+i,1),last=new Date(target.getFullYear(),target.getMonth()+1,0).getDate();
+    target.setDate(Math.min(day,last));
+    return {amount:base+(i<remainder?1:0),date:dateString(target)};
+  });
+}
+function updateInstallmentUI(){
+  const input=document.getElementById('transactionInstallments');
+  const expense=document.getElementById('transactionType').value==='expense';
+  const existing=editTransactionIdx>=0;
+  document.getElementById('installmentFields').hidden=!expense;
+  input.disabled=existing||!expense;
+  if(existing||!expense)input.value='1';
+  const count=Number(input.value),active=expense&&!existing&&count>1;
+  const repeat=document.getElementById('transactionRepeat'),end=document.getElementById('transactionRepeatEnd');
+  const locked=active||!!(existing&&editTransactionSource?.installment);
+  repeat.disabled=locked;end.disabled=locked;
+  if(locked){repeat.value='none';end.value='';}
+  const parts=active?installmentParts(Number(moneyDigits(document.getElementById('transactionAmount').value)),document.getElementById('transactionDate').value,count):[];
+  document.getElementById('installmentPreview').textContent=existing
+    ?'수정은 선택한 내역 1건에만 적용됩니다. 할부 분할은 새 지출 추가 시 설정하세요.'
+    :parts.length?`총액을 ${count}개월로 분할 · ${parts[0].date} ~ ${parts.at(-1).date} · 첫 회 ${formatWon(parts[0].amount)}, 마지막 회 ${formatWon(parts.at(-1).amount)} (수수료 제외). 날짜가 없는 달은 말일로 등록됩니다.`
+    :'총 결제금액을 입력하세요. 2~60개월 선택 시 첫 결제일부터 매달 나누어 등록하며 반복과 중복 적용되지 않습니다.';
 }
 
 function openTransactionModal(type='expense', date, idx) {
   editTransactionIdx = idx !== undefined ? idx : -1;
   const isEdit = editTransactionIdx >= 0;
   const tx = isEdit ? transactions[editTransactionIdx] : {};
+  editTransactionSource=isEdit?tx:null;
+  document.getElementById('transactionInstallments').value='1';
   const txType = isEdit ? tx.type : type;
   setTransactionType(txType, tx.category);
   document.getElementById('transactionAmount').value = formatMoneyInputValue(tx.amount || '');
@@ -727,6 +761,7 @@ function openTransactionModal(type='expense', date, idx) {
   document.getElementById('transactionRepeat').value = tx.repeat || 'none';
   document.getElementById('transactionRepeatEnd').value = tx.repeatEnd || '';
   document.getElementById('transactionMemo').value = tx.memo || '';
+  updateInstallmentUI();
   document.getElementById('transactionOverlay').classList.add('open');
   setTimeout(() => document.getElementById('transactionAmount').focus(), 100);
 }
@@ -734,10 +769,12 @@ function openTransactionModal(type='expense', date, idx) {
 function closeTransactionModal() {
   document.getElementById('transactionOverlay').classList.remove('open');
   editTransactionIdx = -1;
+  editTransactionSource = null;
 }
 function closeTransactionOutside(e) { if (e.target.id === 'transactionOverlay') closeTransactionModal(); }
 
 function saveTransaction() {
+  if(editTransactionIdx>=0&&transactions[editTransactionIdx]!==editTransactionSource){alert('다른 기기에서 내역이 변경되었습니다. 창을 닫고 다시 수정해 주세요.');return;}
   const amount = readMoneyInput(document.getElementById('transactionAmount'));
   if(!Number.isFinite(amount))return;
   const title = document.getElementById('transactionTitle').value.trim();
@@ -746,7 +783,13 @@ function saveTransaction() {
   if (!title) { document.getElementById('transactionTitle').focus(); return; }
   if (!date) { document.getElementById('transactionDate').focus(); return; }
   const previous = editTransactionIdx >= 0 ? transactions[editTransactionIdx] : null;
+  const monthsInput=document.getElementById('transactionInstallments');
+  const months=!previous&&document.getElementById('transactionType').value==='expense'?Number(monthsInput.value):1;
+  if(!Number.isInteger(months)||months<1||months>60){alert('할부 개월은 1~60 사이의 정수로 입력해 주세요.');monthsInput.focus();return;}
+  const parts=months>1?installmentParts(amount,date,months):[];
+  if(months>1&&!parts.length){alert('유효한 날짜와 할부 개월 수 이상의 총액을 입력해 주세요.');return;}
   const tx = {
+    ...previous,
     id: previous?.id || `${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
     type: document.getElementById('transactionType').value,
     amount,
@@ -759,7 +802,9 @@ function saveTransaction() {
     memo: document.getElementById('transactionMemo').value.trim(),
   };
   if (editTransactionIdx >= 0) transactions[editTransactionIdx] = tx;
-  else transactions.push(tx);
+  else if(months>1){
+    transactions.push(...parts.map((part,i)=>({...tx,...part,id:tx.id+'_'+(i+1),repeat:'none',repeatEnd:'',installment:{groupId:tx.id,total:amount,months,number:i+1}})));
+  }else transactions.push(tx);
   closeTransactionModal();
   render();
   if (ledgerDetailDateValue === date) renderLedgerDetail(date);
@@ -803,7 +848,7 @@ function renderLedgerDetail(dateStr) {
         <div><div class="txn-category">${cat.label}</div><div class="txn-title">${escapeHtml(tx.title)}</div></div>
         <div class="txn-amount ${type}">${sign}${formatWon(tx.amount)}</div>
       </div>
-      <div class="txn-meta">${PAYMENT_LABELS[tx.payment] || '기타'}${tx.repeat&&tx.repeat!=='none'?` <span class="repeat-tag">${repeatLabel(tx.repeat)}</span>`:''}${tx._source==='fixed'?'<span class="repeat-tag">고정비</span>':''}${tx.memo ? ` · ${escapeHtml(tx.memo)}` : ''}</div>
+      <div class="txn-meta">${PAYMENT_LABELS[tx.payment] || '기타'}${tx.installment?` <span class="repeat-tag">할부 ${escapeHtml(tx.installment.number)}/${escapeHtml(tx.installment.months)}회차</span>`:''}${tx.repeat&&tx.repeat!=='none'?` <span class="repeat-tag">${repeatLabel(tx.repeat)}</span>`:''}${tx._source==='fixed'?'<span class="repeat-tag">고정비</span>':''}${tx.memo ? ` · ${escapeHtml(tx.memo)}` : ''}</div>
       <div class="txn-actions">
         ${tx._source==='fixed'
           ? `<button class="txn-action-btn" onclick="editFixedFromDetail(${tx._i})">✏️ 고정비 수정</button><button class="txn-action-btn" onclick="deleteFixedFromDetail(${tx._i},'${dateStr}')">🗑 삭제</button>`
