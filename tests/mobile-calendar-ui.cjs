@@ -29,7 +29,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await page.locator('#detailBody .evt-card').count(),30);
   assert.match(await page.locator('#detailBody').textContent(),/아주 긴 일정 제목/);
   assert.equal(await page.locator('.event-completion input').count(),30);
-  assert.equal(await page.locator('#dateNoteText').inputValue(),'메모 유지');
+  assert.equal(await page.locator('#detailBody #dateNoteText').count(),0);
   await page.evaluate(()=>closeDetailModal());
   await page.setViewportSize({width:1280,height:1000});
   assert.ok(await page.locator('.event-badge:visible').count()>0);

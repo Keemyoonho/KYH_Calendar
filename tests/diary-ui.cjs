@@ -21,6 +21,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.deepEqual(errors,[]);
   assert.equal(await page.locator('#diaryPanel,#diaryModeBtn').count(),0);
   assert.equal(await page.evaluate(()=>viewMode),'schedule');
+  await page.evaluate(()=>openDetailModal({stopPropagation(){}},'2026-10-10'));assert.equal(await page.locator('#detailBody #dateNoteText').count(),0);await page.evaluate(()=>closeDetailModal());
   const retained=await page.evaluate(()=>JSON.stringify([cloud.events,cloud.transactions,cloud.eventChecks,cloud.dateNotes]));
   await page.evaluate(async()=>{allowed=false;await purgeRetiredDiary(cloud);});assert.ok(await page.evaluate(()=>cloud.diaryRecords));
   await page.evaluate(async()=>{allowed=true;fail=true;await purgeRetiredDiary(cloud);});assert.equal(await page.locator('body').getAttribute('data-retired-diary'),'failed');
@@ -29,22 +30,22 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await page.evaluate(()=>JSON.stringify([cloud.events,cloud.transactions,cloud.eventChecks,cloud.dateNotes])),retained);
   assert.equal(await page.evaluate(()=>storage.yoonho_private_diary_v1||storage.yoonho_diary_pending_v2||storage.yoonho_diary_migrated_v2),undefined);
   assert.equal(await page.evaluate(()=>storage.other),'keep');
-  await page.evaluate(()=>{receiveDateNotes(cloud);openDetailModal({stopPropagation(){}},'2026-10-10');});
+  await page.evaluate(()=>{setViewMode('notes');receiveDateNotes(cloud);selectNoteDate('2026-10-10');});
   await page.locator('#dateNoteText').fill('오늘 짧은 기록 <img src=x>');
   await page.evaluate(()=>saveDateNote('2026-10-10'));
   assert.match(await page.locator('#dateNoteStatus').textContent(),/서버 저장 완료/);
   assert.equal(await page.evaluate(()=>cloud.dateNotes['2026-10-10'].text),'오늘 짧은 기록 <img src=x>');
-  await page.evaluate(()=>{dateNotes={};receiveDateNotes(cloud);openDetailModal({stopPropagation(){}},'2026-10-10');});
+  await page.evaluate(()=>{dateNotes={};setViewMode('notes');receiveDateNotes(cloud);selectNoteDate('2026-10-10');});
   assert.equal(await page.locator('#dateNoteText').inputValue(),'오늘 짧은 기록 <img src=x>');
-  assert.equal(await page.locator('#detailBody img').count(),0);
+  assert.equal(await page.locator('#notesBody img').count(),0);
   await page.locator('#dateNoteText').fill('입력 보존');
-  await page.evaluate(()=>{receiveDateNotes(cloud);renderDetail(detailDate);});
+  await page.evaluate(()=>{receiveDateNotes(cloud);renderNotesPanel();});
   assert.equal(await page.locator('#dateNoteText').inputValue(),'입력 보존');
   assert.equal(await page.locator('#dateNoteText').evaluate(e=>document.activeElement===e),true);
-  await page.evaluate(()=>openDetailModal({stopPropagation(){}},'2026-10-11'));
+  await page.evaluate(()=>selectNoteDate('2026-10-11'));
   assert.equal(await page.locator('#dateNoteText').inputValue(),'');
   await page.locator('#dateNoteText').fill('다른 날짜');await page.evaluate(()=>saveDateNote('2026-10-11'));
-  await page.evaluate(()=>openDetailModal({stopPropagation(){}},'2026-10-10'));
+  await page.evaluate(()=>selectNoteDate('2026-10-10'));
   assert.equal(await page.locator('#dateNoteText').inputValue(),'입력 보존');
   await page.evaluate(async()=>{fail=true;await saveDateNote('2026-10-10');});
   assert.match(await page.locator('#dateNoteStatus').textContent(),/저장 실패/);
@@ -60,7 +61,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.evaluate(()=>pushToFirebase());assert.equal(await page.evaluate(()=>JSON.stringify(cloud.dateNotes)),saved);
   for(const width of [1280,390,320])for(const theme of ['light','dark']){
    await page.setViewportSize({width,height:900});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);
-   assert.equal(await page.locator('#detailOverlay .detail-modal').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+   assert.equal(await page.locator('#notesPanel').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
    if(width===390)await page.screenshot({path:path.join(root,'tests','date-note-'+theme+'.png')});
   }
   assert.deepEqual(errors,[]);console.log('PASS: old diary purge and isolation, date notes CRUD, recovery, input preservation, conflict/offline handling, responsive themes');

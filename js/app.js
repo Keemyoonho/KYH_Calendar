@@ -115,7 +115,7 @@ let editTransactionIdx = -1;
 let editTransactionSource = null;
 let editFixedExpenseIdx = -1;
 let ledgerDetailDateValue = '';
-let viewMode = ['ledger'].includes(localStorage.getItem('yoonho_view_mode')) ? localStorage.getItem('yoonho_view_mode') : 'schedule';
+let viewMode = ['ledger','notes'].includes(localStorage.getItem('yoonho_view_mode')) ? localStorage.getItem('yoonho_view_mode') : 'schedule';
 let syncTimer = null;
 let isRemoteUpdate = false;
 
@@ -457,25 +457,30 @@ function buyKey(e) { if(e.key==='Enter'&&!e.isComposing&&e.target.tagName==='INP
 
 // ── 일정 / 가계부 모드 ──
 function setViewMode(mode) {
-  viewMode = ['ledger'].includes(mode) ? mode : 'schedule';
+  viewMode = ['ledger','notes'].includes(mode) ? mode : 'schedule';
   localStorage.setItem('yoonho_view_mode', viewMode);
   updateViewMode();
   render();
 }
 
 function updateViewMode() {
-  const isLedger = viewMode === 'ledger';
+  const isLedger = viewMode === 'ledger', isNotes = viewMode === 'notes';
   document.body.classList.toggle('ledger-view', isLedger);
-  document.getElementById('scheduleModeBtn').classList.toggle('active', !isLedger);
+  document.body.classList.toggle('notes-view', isNotes);
+  document.getElementById('notesModeBtn').classList.toggle('active', isNotes);
+  document.getElementById('notesModeBtn').setAttribute('aria-selected', String(isNotes));
+  document.getElementById('notesPanel').hidden = !isNotes;
+  document.getElementById('scheduleModeBtn').classList.toggle('active', !isLedger && !isNotes);
   document.getElementById('ledgerModeBtn').classList.toggle('active', isLedger);
-  document.getElementById('scheduleModeBtn').setAttribute('aria-selected', String(!isLedger));
+  document.getElementById('scheduleModeBtn').setAttribute('aria-selected', String(!isLedger && !isNotes));
   document.getElementById('ledgerModeBtn').setAttribute('aria-selected', String(isLedger));
-  document.getElementById('scheduleLegend').style.display = isLedger ? 'none' : 'flex';
+  document.getElementById('scheduleLegend').style.display = isLedger || isNotes ? 'none' : 'flex';
   document.getElementById('ledgerLegend').style.display = isLedger ? 'flex' : 'none';
   document.getElementById('ledgerSummary').classList.toggle('show', isLedger);
   document.getElementById('ledgerActions').classList.toggle('show', isLedger);
   document.querySelector('.header-title').textContent = isLedger ? "💰 Keemyoonho's 가계부" : "📅 Keemyoonho's 스케줄표";
-  document.querySelector('.header-sub').textContent = isLedger ? "Keemyoonho's Personal Ledger" : "Keemyoonho's Personal Schedule";
+  if(isNotes)document.querySelector('.header-title').textContent = "📝 Keemyoonho's 메모";
+  document.querySelector('.header-sub').textContent = isNotes ? "Keemyoonho's Personal Notes" : isLedger ? "Keemyoonho's Personal Ledger" : "Keemyoonho's Personal Schedule";
 }
 
 function formatWon(amount) {
@@ -922,7 +927,11 @@ function render() {
     else if(i>=first+lastDay){day=i-first-lastDay+1;const nm=m===11?1:m+2,ny=m===11?y+1:y;dateStr=`${ny}-${String(nm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;cls+=' other-month';}
     else{day=i-first+1;dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;if(day===today.getDate()&&m===today.getMonth()&&y===today.getFullYear())cls+=' today';}
     let badges='', clickHandler='', expenseFooter='';
-    if(viewMode==='ledger'){
+    if(viewMode==='notes'){
+      badges=dateNoteBadge(dateStr);
+      clickHandler=`selectNoteDate('${dateStr}')`;
+      if(dateStr===selectedNoteDate)cls+=' note-selected';
+    }else if(viewMode==='ledger'){
       const dayTx=getLedgerEntriesForDate(dateStr);
       const income=dayTx.filter(t=>t.type==='income').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       const expense=dayTx.filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
@@ -932,7 +941,7 @@ function render() {
     }else{
       const dayEvts=getEventsForDate(dateStr).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
       badges=dayEvts.map(e=>{const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' \u26A0':'';const t=e.start?` ${fmtTime(e.start)}`:'';const flags=`${hasEventChecklist(e)?(isEventChecked(e)?'✓ ':'☐ '):''}${e.pinned?'📌 ':''}${e.repeat&&e.repeat!=='none'?'↻ ':''}`;return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${flags}${escapeHtml(e.title)}${t}${warn}</div>`;}).join('');
-      if(typeof dateNoteBadge==='function')badges+=dateNoteBadge(dateStr);
+
       if(dayEvts.length)badges+=`<span class="mobile-event-marker" role="img" aria-label="일정 ${dayEvts.length}개, 날짜를 눌러 확인"></span>`;
       const dayExpense=getLedgerEntriesForDate(dateStr).filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       if(dayExpense){cls+=' has-expense-summary';expenseFooter=`<div class="schedule-expense-summary">−${formatWon(dayExpense)}</div>`;}
@@ -942,6 +951,7 @@ function render() {
     html+=`<div class="${cls}" onclick="${clickHandler}"><div class="day-num">${day}</div><div class="events">${badges}</div>${expenseFooter}</div>`;
   }
   document.getElementById('daysGrid').innerHTML=html;
+  if(viewMode==='notes')renderNotesPanel();
 }
 function changeMonth(d){cur.setDate(1);cur.setMonth(cur.getMonth()+d);render();}
 
@@ -1010,8 +1020,8 @@ function closeDetailModal(){document.getElementById('detailOverlay').classList.r
 function closeDetailOutside(e){if(e.target.id==='detailOverlay')closeDetailModal();}
 
 function renderDetail(dateStr){
-  const noteFocused=document.activeElement?.id==='dateNoteText';
-  const noteSelection=noteFocused?[document.activeElement.selectionStart,document.activeElement.selectionEnd]:null;
+
+
   const dayEvts=getEventsForDate(dateStr).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
   let html='';if(!dayEvts.length)html='<div class="no-event">등록된 일정이 없어요</div>';
   dayEvts.forEach(e=>{
@@ -1029,9 +1039,9 @@ function renderDetail(dateStr){
   });
   html+=`<button class="detail-add-btn" onclick="openAddFromDetail('${dateStr}')">+ 이 날 일정 추가</button>`;
 
-  if(typeof dateNoteHtml==='function')html+=dateNoteHtml(dateStr);
+
   document.getElementById('detailBody').innerHTML=html;
-  if(noteFocused){const input=document.getElementById('dateNoteText');if(input&&!input.disabled){input.focus({preventScroll:true});input.setSelectionRange(...noteSelection);}}
+
 }
 
 function hasEventChecklist(event){return !!event.checklist&&['weekly','monthly','yearly'].includes(event.repeat)&&/^evt_[a-f0-9_]+$/.test(event.checkId||'');}

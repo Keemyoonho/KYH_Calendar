@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261107-mobile-grid">
+<link rel="stylesheet" href="./css/styles.css?v=20261107-notes-tab">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -62,6 +62,7 @@
       <div class="mode-switch" role="tablist" aria-label="캘린더 모드 선택">
         <button class="mode-btn active" id="scheduleModeBtn" type="button" role="tab" aria-selected="true" onclick="setViewMode('schedule')">&#128197; 일정</button>
         <button class="mode-btn" id="ledgerModeBtn" type="button" role="tab" aria-selected="false" onclick="setViewMode('ledger')">&#128176; 가계부</button>
+        <button class="mode-btn" id="notesModeBtn" type="button" role="tab" aria-selected="false" onclick="setViewMode('notes')">📝 메모</button>
       </div>
     </div>
     <div class="nav-wrap">
@@ -145,6 +146,11 @@
     </div>
     <div class="days" id="daysGrid"></div>
   </div>
+
+  <section class="feature-panel" id="notesPanel" hidden aria-label="날짜별 메모">
+    <div class="panel-head"><label for="noteDate">📝 메모 날짜</label><input id="noteDate" type="date" onchange="selectNoteDate(this.value)"></div>
+    <div id="notesBody"></div>
+  </section>
 
   <div class="bottom ledger-actions" id="ledgerActions">
     <button class="btn-money btn-expense" type="button" onclick="openTransactionModal('expense')">− 지출 추가</button>
@@ -369,8 +375,8 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20261010-date-notes"></script>
+<script src="./js/diary.js?v=20261107-notes-tab"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261107-mobile-grid"></script>
+<script src="./js/app.js?v=20261107-notes-tab"></script>
 </body>
 </html>
