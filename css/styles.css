@@ -658,3 +658,16 @@ html[data-theme] .diet-day.selected { outline-color: var(--glass-accent); }
 .date-note-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
 .date-note-editor p { margin-top:8px; font-size:.7rem; color:var(--glass-muted); overflow-wrap:anywhere; }
 .date-note-badge { font-size:.65rem; color:var(--glass-muted); padding:3px; }
+.mobile-event-marker { display:none; }
+@media (max-width:640px) {
+  .weekdays,.days { grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .days { grid-auto-rows:82px; }
+  .day { min-width:0; min-height:0; height:82px; overflow:hidden; }
+  .day .events { min-width:0; overflow:hidden; }
+  .day .event-badge { display:none; }
+  .mobile-event-marker { display:block; width:8px; height:8px; margin:8px auto 0; border-radius:50%; background:var(--glass-accent); }
+  .day .date-note-badge { padding:1px 0; font-size:.55rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .day .date-note-badge + .mobile-event-marker { margin-top:3px; }
+  .day .money-badge { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .day .schedule-expense-summary { display:block; text-align:right; }
+}

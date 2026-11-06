@@ -933,6 +933,7 @@ function render() {
       const dayEvts=getEventsForDate(dateStr).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
       badges=dayEvts.map(e=>{const cat=CATS[e.cat]||CATS.etc;const dl=deadlineStatus(e.deadline);const warn=dl&&(dl.cls==='urgent'||dl.cls==='overdue')?' \u26A0':'';const t=e.start?` ${fmtTime(e.start)}`:'';const flags=`${hasEventChecklist(e)?(isEventChecked(e)?'✓ ':'☐ '):''}${e.pinned?'📌 ':''}${e.repeat&&e.repeat!=='none'?'↻ ':''}`;return `<div class="event-badge" style="background:${cat.color}" onclick="openDetailModal(event,'${dateStr}')">${flags}${escapeHtml(e.title)}${t}${warn}</div>`;}).join('');
       if(typeof dateNoteBadge==='function')badges+=dateNoteBadge(dateStr);
+      if(dayEvts.length)badges+=`<span class="mobile-event-marker" role="img" aria-label="일정 ${dayEvts.length}개, 날짜를 눌러 확인"></span>`;
       const dayExpense=getLedgerEntriesForDate(dateStr).filter(t=>t.type==='expense').reduce((sum,t)=>sum+(Number(t.amount)||0),0);
       if(dayExpense){cls+=' has-expense-summary';expenseFooter=`<div class="schedule-expense-summary">−${formatWon(dayExpense)}</div>`;}
       clickHandler=`openDetailModal(event,'${dateStr}')`;
