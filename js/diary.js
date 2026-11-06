@@ -8,7 +8,7 @@ function selectNoteDate(date){
  const [y,m]=date.split('-').map(Number);cur=new Date(y,m-1,1);
  render();
 }
-function renderNotesPanel(){
+function renderLegacyDateNote(){
  const host=document.getElementById('notesBody');if(!host)return;
  const focused=document.activeElement?.id==='dateNoteText';
  const selection=focused?[document.activeElement.selectionStart,document.activeElement.selectionEnd]:null;
@@ -18,8 +18,8 @@ function renderNotesPanel(){
  if(focused&&!input.disabled){input.focus({preventScroll:true});input.setSelectionRange(...selection);}
 }
 function noteText(record){return typeof record?.text==='string'?record.text:'';}
-function hasUnsavedDateNotes(){return Object.keys(noteDrafts).length>0||noteBusy.size>0;}
-function receiveDateNotes(data){dateNotes=data.dateNotes&&typeof data.dateNotes==='object'?data.dateNotes:{};}
+function hasUnsavedDateNotes(){return Object.keys(noteDrafts).length>0||noteBusy.size>0||(typeof hasLibraryDraft==='function'&&hasLibraryDraft());}
+function receiveDateNotes(data){dateNotes=data.dateNotes&&typeof data.dateNotes==='object'?data.dateNotes:{};if(typeof receiveNoteLibrary==='function')receiveNoteLibrary(data);}
 async function purgeRetiredDiary(data){
  if(!canSync()||retiredDiaryDeleting)return;
  try{for(const key of ['yoonho_private_diary_v1','yoonho_diary_pending_v2','yoonho_diary_migrated_v2'])localStorage.removeItem(key);}catch(e){}

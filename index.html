@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261107-notes-tab">
+<link rel="stylesheet" href="./css/styles.css?v=20261107-notes-library">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -147,9 +147,25 @@
     <div class="days" id="daysGrid"></div>
   </div>
 
-  <section class="feature-panel" id="notesPanel" hidden aria-label="날짜별 메모">
-    <div class="panel-head"><label for="noteDate">📝 메모 날짜</label><input id="noteDate" type="date" onchange="selectNoteDate(this.value)"></div>
-    <div id="notesBody"></div>
+  <section class="feature-panel" id="notesPanel" hidden aria-label="카테고리별 메모">
+    <aside class="notes-sidebar" aria-label="메모 카테고리">
+      <div class="notes-sidebar-title">내 카테고리</div>
+      <div id="noteCategories"></div>
+      <form class="notes-category-add" onsubmit="event.preventDefault();addNoteCategory()"><input id="newNoteCategory" maxlength="60" placeholder="새 카테고리" aria-label="새 카테고리 이름"><button type="submit" aria-label="카테고리 추가">＋</button></form>
+    </aside>
+    <div class="notes-workspace">
+      <div class="notes-toolbar"><div><h2 id="notesCategoryTitle">모든 메모</h2><span id="notesCount"></span></div><button class="todo-add-btn" type="button" onclick="newLibraryNote()">＋ 새 메모</button></div>
+      <div class="notes-controls"><input id="notesSearch" type="search" placeholder="메모 검색" aria-label="메모 검색" oninput="renderNoteCards()"><div id="noteCategoryActions"></div></div>
+      <p id="notesStatus" role="status"></p>
+      <div class="notes-card-grid" id="notesBody"></div>
+      <section id="noteEditor" hidden aria-label="메모 편집">
+        <div class="notes-editor-head"><span>메모 편집</span><button type="button" onclick="closeLibraryNote()">닫기</button></div>
+        <label for="libraryNoteCategory">카테고리</label><select id="libraryNoteCategory" onchange="editLibraryNote()"></select>
+        <input id="libraryNoteTitle" maxlength="150" placeholder="제목" aria-label="메모 제목" oninput="editLibraryNote()">
+        <textarea id="libraryNoteBody" maxlength="20000" placeholder="내용을 입력하세요…" aria-label="메모 내용" oninput="editLibraryNote()"></textarea>
+        <div class="notes-editor-actions"><button class="todo-add-btn" type="button" onclick="saveLibraryNote()">저장</button><button type="button" onclick="reloadLibraryNote()">저장본 불러오기</button><button type="button" onclick="deleteLibraryNote()">삭제</button><span id="noteEditorStatus" role="status"></span></div>
+      </section>
+    </div>
   </section>
 
   <div class="bottom ledger-actions" id="ledgerActions">
@@ -375,8 +391,9 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20261107-notes-tab"></script>
+<script src="./js/diary.js?v=20261107-notes-library"></script>
+<script src="./js/notes.js?v=20261107-notes-library"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261107-notes-tab"></script>
+<script src="./js/app.js?v=20261107-notes-library"></script>
 </body>
 </html>
