@@ -202,21 +202,10 @@ function startRealtimeSync() {
       buySlots = normalizeBuySlots(data);
       loadMonthlySections(data);
       if (curBuySlot >= BUY_SLOT_COUNT) curBuySlot = 0;
-      if (Array.isArray(data.slots) && data.slots.length === SLOT_COUNT) slots = data.slots;
-      const quickMemoEl = document.getElementById('quickMemo');
-      if (document.activeElement !== quickMemoEl) {
-        quickMemoEl.value = data.quickMemo || '';
-        updateQuickChar();
-      }
-      if (document.activeElement !== document.getElementById('slotTitle') &&
-          document.activeElement !== document.getElementById('slotBody')) {
-        renderSlot();
-      }
     } else {
       events = []; todos = [];
       transactions = []; monthlyBudgets = {}; fixedExpenses = [];
       buySlots = makeBuySlots();
-      slots = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
     }
     render();
     renderTodos();
@@ -230,6 +219,7 @@ function startRealtimeSync() {
     setSyncStatus('ok', '실시간 동기화 중');
     isRemoteUpdate = false;
     saveLocal();
+    purgeScheduleMemos(data);
     purgeRetiredMonthlyGoals(data);
     purgeRetiredTracking(data);
     if(typeof purgeRetiredDiary==='function')purgeRetiredDiary(data||{});
@@ -257,8 +247,8 @@ function pushToFirebase() {
     dietRecords: null,
     goalTracker: null,
     buySlots,
-    slots,
-    quickMemo: document.getElementById('quickMemo').value,
+    slots: null,
+    quickMemo: null,
     updatedAt: Date.now(),
   };
   DATA_REF.update(payload)
@@ -271,16 +261,13 @@ function pushToFirebase() {
 
 function scheduleSync() {
   if (isRemoteUpdate || !canSync()) return;
-  updateQuickChar();
+
   saveLocal();
   clearTimeout(syncTimer);
   syncTimer = setTimeout(pushToFirebase, 1500);
 }
 
-function updateQuickChar() {
-  const v = document.getElementById('quickMemo').value;
-  document.getElementById('quickChar').textContent = v.length + '자';
-}
+
 
 function manualRefresh() {
   if(!canSync())return;
@@ -298,8 +285,6 @@ function saveLocal() {
     localStorage.setItem('yoonho_fixed_expenses', JSON.stringify(fixedExpenses));
 
     localStorage.setItem('yoonho_buySlots', JSON.stringify(buySlots));
-    localStorage.setItem('yoonho_slots', JSON.stringify(slots));
-    localStorage.setItem('yoonho_quickMemo', document.getElementById('quickMemo').value);
   } catch(e) {}
 }
 
@@ -320,37 +305,11 @@ function loadLocal() {
       if (Array.isArray(oldB)) buySlots[0].items = oldB;
     }
   } catch(e) { buySlots = makeBuySlots(); }
-  try {
-    const s = JSON.parse(localStorage.getItem('yoonho_slots'));
-    if (Array.isArray(s) && s.length === SLOT_COUNT) slots = s;
-  } catch(e) {}
-  try { loadMonthlySections(JSON.parse(localStorage.getItem('yoonho_monthly_sections') || '{}')); } catch(e) { loadMonthlySections({}); }
-  document.getElementById('quickMemo').value = localStorage.getItem('yoonho_quickMemo') || '';
-  updateQuickChar();
-  render(); renderSlot(); renderTodos(); renderBuySlot();
-}
 
-// ── 주 메모 슬롯 ──
-function renderSlot() {
-  const s = slots[curSlot];
-  document.getElementById('slotTitle').value = s.title;
-  document.getElementById('slotBody').value  = s.body;
-  document.getElementById('slotChar').textContent = s.body.length + '자';
-  document.getElementById('slotIndicator').textContent = `${curSlot+1} / ${SLOT_COUNT}`;
-  document.getElementById('slotPrev').disabled = curSlot === 0;
-  document.getElementById('slotNext').disabled = curSlot === SLOT_COUNT-1;
-  document.getElementById('slotDots').innerHTML = Array.from({length: SLOT_COUNT}, (_,i) =>
-    `<div class="slot-dot ${i===curSlot?'active':''}" onclick="goSlot(${i})"></div>`
-  ).join('');
+  try { loadMonthlySections(JSON.parse(localStorage.getItem('yoonho_monthly_sections') || '{}')); } catch(e) { loadMonthlySections({}); }
+
+  render(); renderTodos(); renderBuySlot();
 }
-function saveSlot() {
-  slots[curSlot].title = document.getElementById('slotTitle').value;
-  slots[curSlot].body  = document.getElementById('slotBody').value;
-  document.getElementById('slotChar').textContent = slots[curSlot].body.length + '자';
-  scheduleSync();
-}
-function changeSlot(d) { saveSlot(); curSlot = Math.max(0, Math.min(SLOT_COUNT-1, curSlot+d)); renderSlot(); }
-function goSlot(i) { saveSlot(); curSlot = i; renderSlot(); }
 
 // ── Todo ──
 function renderTodos() {
@@ -393,7 +352,7 @@ let buyEditor=null;
 function buyContext(){return curBuySlot===0?'month:'+currentMonthKey():'slot:'+curBuySlot;}
 function cancelBuyEdit(){
   buyEditor=null;
-  for(const id of ['buyInput','buyDescription','buyPrice'])document.getElementById(id).value='';
+  for(const id of ['buyInput','buyDescription','buyPrice','buyLink'])document.getElementById(id).value='';
   document.getElementById('buyCategory').value='other';
   document.getElementById('buySaveButton').textContent='추가';
   document.getElementById('buyCancelEdit').hidden=true;
@@ -403,6 +362,7 @@ function editBuy(i){
   buyEditor={item,context:buyContext()};
   document.getElementById('buyInput').value=item.text||'';
   document.getElementById('buyDescription').value=item.description||'';
+  document.getElementById('buyLink').value=item.link||'';
   document.getElementById('buyCategory').value=BUY_CATEGORIES[item.category]?item.category:'other';
   document.getElementById('buyPrice').value=formatMoneyInputValue(item.price??'');
   document.getElementById('buySaveButton').textContent='수정 저장';
@@ -421,7 +381,7 @@ function renderBuySlot() {
   document.getElementById('buyList').innerHTML = slot.items.map((b,i) =>
     `<li class="todo-item">
       <input type="checkbox" class="buy-accent" ${b.done?'checked':''} onchange="toggleBuy(${i})" />
-      <div class="buy-item-content"><span class="${b.done?'done':''}" onclick="toggleBuy(${i})"><span role="img" aria-label="${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).label}">${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).icon}</span> ${escapeHtml(b.text)}</span>${b.description?`<div class="buy-item-description">${escapeHtml(b.description)}</div>`:''}${b.price!==''&&b.price!=null&&Number.isFinite(Number(b.price))?`<div class="buy-item-price">${Number(b.price).toLocaleString('ko-KR')}원</div>`:''}</div>
+      <div class="buy-item-content"><span class="${b.done?'done':''}" onclick="toggleBuy(${i})"><span role="img" aria-label="${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).label}">${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).icon}</span> ${safeEventUrl(b.link)?`<a href="${escapeHtml(safeEventUrl(b.link))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${escapeHtml(b.text)}</a>`:escapeHtml(b.text)}</span>${b.description?`<div class="buy-item-description">${escapeHtml(b.description)}</div>`:''}${b.price!==''&&b.price!=null&&Number.isFinite(Number(b.price))?`<div class="buy-item-price">${Number(b.price).toLocaleString('ko-KR')}원</div>`:''}</div>
       <button class="goal-edit" type="button" onclick="editBuy(${i})" aria-label="구매 항목 ${i+1} 수정">수정</button>
       <button class="del-todo" onclick="delBuy(${i})">&#10005;</button>
     </li>`
@@ -444,7 +404,9 @@ function addBuy() {
   const parsed=readMoneyInput(priceInput);if(!Number.isFinite(parsed))return;
   const price=priceInput.value===''?'':parsed;
   const category=document.getElementById('buyCategory').value;
-  const fields={text,description:document.getElementById('buyDescription').value.trim(),category:BUY_CATEGORIES[category]?category:'other',price};
+  const rawLink=document.getElementById('buyLink').value.trim(),link=safeEventUrl(rawLink);
+  if(rawLink&&!link){alert('링크는 https:// 또는 http:// 주소를 입력해 주세요.');return;}
+  const fields={text,link,description:document.getElementById('buyDescription').value.trim(),category:BUY_CATEGORIES[category]?category:'other',price};
   if(buyEditor){
     if(buyEditor.context!==buyContext()||!currentBuyList().items.includes(buyEditor.item)){alert('목록이 변경되었습니다. 항목의 수정 버튼을 다시 눌러주세요.');cancelBuyEdit();return;}
     Object.assign(buyEditor.item,fields);

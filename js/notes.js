@@ -4,7 +4,7 @@ const safeNoteKey=k=>/^[a-zA-Z0-9_-]+$/.test(k);
 const noteClone=v=>JSON.parse(JSON.stringify(v??null));
 function receiveNoteLibrary(data){noteLibrary=data.noteLibrary&&typeof data.noteLibrary==='object'?data.noteLibrary:{categories:{},notes:{}};}
 function hasLibraryDraft(){return libraryBusy||!!libraryDraft?.dirty;}
-function libraryCategories(){return {uncategorized:'미분류',legacy:'기존 메모',...Object.fromEntries(Object.entries(noteLibrary.categories||{}).filter(([id,c])=>safeNoteKey(id)&&typeof c?.name==='string').map(([id,c])=>[id,c.name]))};}
+function libraryCategories(){return {...Object.fromEntries(Object.entries(noteLibrary.categories||{}).filter(([id,c])=>safeNoteKey(id)&&!['all','legacy','uncategorized'].includes(id)&&typeof c?.name==='string').sort((a,b)=>Number(!!b[1].pinned)-Number(!!a[1].pinned)||(a[1].createdAt||0)-(b[1].createdAt||0)).map(([id,c])=>[id,c.name])),uncategorized:'미분류'};}
 function libraryNotes(){
  const result={};
  for(const [date,n] of Object.entries(dateNotes))if(isSafeCalendarDate(date)&&noteText(n))result['date_'+date]={title:date+' 메모',text:noteText(n),category:'legacy',updatedAt:n.updatedAt||0};
@@ -17,9 +17,9 @@ function noteCategoryOf(n){return Object.hasOwn(libraryCategories(),n.category)?
 function renderNotesPanel(){
  const categories=libraryCategories(),notes=Object.values(libraryNotes());
  if(activeNoteCategory!=='all'&&!Object.hasOwn(categories,activeNoteCategory))activeNoteCategory='all';
- document.getElementById('noteCategories').innerHTML=Object.entries({all:'모든 메모',...categories}).map(([id,name])=>`<button type="button" class="notes-folder ${activeNoteCategory===id?'selected':''}" onclick="selectNoteCategory('${id}')" aria-pressed="${activeNoteCategory===id}"><span>▱ ${escapeHtml(name)}</span><small>${id==='all'?notes.length:notes.filter(n=>noteCategoryOf(n)===id).length}</small></button>`).join('');
+ document.getElementById('noteCategories').innerHTML=Object.entries({all:'모든 메모',...categories}).map(([id,name])=>`<button type="button" class="notes-folder ${activeNoteCategory===id?'selected':''}" onclick="selectNoteCategory('${id}')" aria-pressed="${activeNoteCategory===id}"><span>${noteLibrary.categories?.[id]?.pinned?'📌':'▱'} ${escapeHtml(name)}</span><small>${id==='all'?notes.length:notes.filter(n=>noteCategoryOf(n)===id).length}</small></button>`).join('');
  document.getElementById('notesCategoryTitle').textContent=activeNoteCategory==='all'?'모든 메모':categories[activeNoteCategory];
- document.getElementById('noteCategoryActions').innerHTML=Object.hasOwn(noteLibrary.categories||{},activeNoteCategory)?'<button type="button" onclick="renameNoteCategory()">이름 수정</button><button type="button" onclick="deleteNoteCategory()">카테고리 삭제</button>':'';
+ document.getElementById('noteCategoryActions').innerHTML=Object.hasOwn(noteLibrary.categories||{},activeNoteCategory)?`<button type="button" onclick="pinNoteCategory()">${noteLibrary.categories[activeNoteCategory].pinned?'📌 고정 해제':'상단 고정'}</button><button type="button" onclick="renameNoteCategory()">이름 수정</button><button type="button" onclick="deleteNoteCategory()">카테고리 삭제</button>`:'';
  renderNoteCards();
  // Background sync never replaces an in-progress editor.
  if(libraryDraft)updateNoteCategoryOptions();
@@ -51,8 +51,22 @@ async function transactNoteLibrary(change){
 }
 async function addNoteCategory(){
  const input=document.getElementById('newNoteCategory'),name=input.value.trim();if(!name||name.length>60)return;
- const id=uniqueNoteId('cat');
- if(await transactNoteLibrary(lib=>{lib.categories[id]={name};return true;})){input.value='';selectNoteCategory(id);}
+ const id=uniqueNoteId('cat'),createdAt=Date.now();
+ if(await transactNoteLibrary(lib=>{lib.categories[id]={name,createdAt,pinned:false};return true;})){input.value='';selectNoteCategory(id);}
+}
+async function pinNoteCategory(){
+ const id=activeNoteCategory,base=noteLibrary.categories?.[id];if(!base)return;const pinned=!base.pinned;
+ await transactNoteLibrary(lib=>{if(!lib.categories[id])return false;lib.categories[id].pinned=pinned;return true;});
+}
+let deletingScheduleMemos=false;
+async function purgeScheduleMemos(data){
+ if(!canSync()||deletingScheduleMemos)return;
+ try{localStorage.removeItem('yoonho_slots');localStorage.removeItem('yoonho_quickMemo');}catch(e){}
+ if(!Object.hasOwn(data||{},'slots')&&!Object.hasOwn(data||{},'quickMemo'))return;
+ deletingScheduleMemos=true;
+ try{await DATA_REF.update({slots:null,quickMemo:null});}
+ catch(e){setSyncStatus('err','기존 일정 메모 삭제 실패 — 새로고침해 다시 시도해 주세요.');}
+ finally{deletingScheduleMemos=false;}
 }
 async function renameNoteCategory(){
  const id=activeNoteCategory,base=noteClone(noteLibrary.categories?.[id]);if(!base)return;

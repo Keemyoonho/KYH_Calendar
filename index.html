@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261107-notes-library">
+<link rel="stylesheet" href="./css/styles.css?v=20261107-notes-buy-v2">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -195,26 +195,6 @@
   <div class="memo-section">
     <div class="memo-owner">@Keemyoonho</div>
 
-    <!-- 1. 주 메모 슬롯 (10개) -->
-    <div class="memo-main">
-      <div class="memo-slot-title-row">
-        <input class="memo-slot-title" id="slotTitle" placeholder="메모 제목 (선택)" oninput="saveSlot()" />
-        <div class="slot-dots" id="slotDots"></div>
-      </div>
-      <textarea id="slotBody" placeholder="메모를 입력하세요..." oninput="saveSlot()"></textarea>
-      <div class="memo-main-footer">
-        <span class="memo-char" id="slotChar">0자</span>
-        <div class="slot-nav">
-          <button class="slot-nav-btn" id="slotPrev" onclick="changeSlot(-1)">&#9664;</button>
-          <span class="slot-indicator" id="slotIndicator">1 / 10</span>
-          <button class="slot-nav-btn" id="slotNext" onclick="changeSlot(1)">&#9654;</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 이전 빠른 메모 데이터는 삭제하지 않고 동기화 호환용으로 보존 -->
-    <textarea id="quickMemo" hidden></textarea><span id="quickChar" hidden></span>
-
     <!-- 3. 할 일 목록 + Buy list (슬롯형, 2열) -->
     <div class="memo-row">
       <div class="memo-sub">
@@ -241,6 +221,7 @@
           <div class="mini-field"><label for="buyInput">물품명</label><input type="text" id="buyInput" placeholder="예: 무선 마우스" required /></div>
           <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="other" selected>📦 그 외</option></select></div>
           <div class="mini-field buy-description-field"><label for="buyDescription">물품 설명 (선택)</label><input type="text" id="buyDescription" placeholder="예: 검정색, 무소음" /></div>
+          <div class="mini-field buy-description-field"><label for="buyLink">물품 링크 (선택)</label><input type="url" id="buyLink" placeholder="https://" /></div>
           <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="text" data-money inputmode="numeric" id="buyPrice" placeholder="예: 35,000" /></div>
           <button class="buy-add-btn" id="buySaveButton" type="button" onclick="addBuy()">추가</button>
           <button class="goal-edit" id="buyCancelEdit" type="button" onclick="cancelBuyEdit()" hidden>수정 취소</button>
@@ -391,9 +372,9 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20261107-notes-library"></script>
-<script src="./js/notes.js?v=20261107-notes-library"></script>
+<script src="./js/diary.js?v=20261107-notes-buy-v2"></script>
+<script src="./js/notes.js?v=20261107-notes-buy-v2"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261107-notes-library"></script>
+<script src="./js/app.js?v=20261107-notes-buy-v2"></script>
 </body>
 </html>
