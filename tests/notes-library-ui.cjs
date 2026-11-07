@@ -27,6 +27,15 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await page.evaluate(id=>cloud.noteLibrary.notes[id].category,id),cat);
   assert.equal(await page.evaluate(()=>libraryDraft.dirty),false);
   assert.equal(await page.locator('#notesBody img').count(),0);
+  await page.evaluate(()=>closeLibraryNote());
+  await page.locator('#notesBody .note-card').first().click();
+  assert.equal(await page.locator('#noteReader').isVisible(),true);
+  assert.equal(await page.locator('#noteEditor').isVisible(),false);
+  assert.equal(await page.locator('#notesBody').isVisible(),false);
+  assert.match(await page.locator('#noteReaderBody').textContent(),/복습 내용/);
+  assert.equal(await page.locator('#noteReader img').count(),0);
+  await page.locator('#noteReader button').filter({hasText:'수정'}).click();
+  assert.equal(await page.locator('#noteEditor').isVisible(),true);
   await page.locator('#libraryNoteBody').fill('작성 중');await page.evaluate(()=>{receiveDateNotes(cloud);render()});
   assert.equal(await page.locator('#libraryNoteBody').inputValue(),'작성 중');
   await page.evaluate(async()=>{fail=true;await saveLibraryNote()});assert.equal(await page.evaluate(()=>libraryDraft.dirty),true);
@@ -36,7 +45,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.locator('#libraryNoteBody').fill('최종');await page.evaluate(()=>saveLibraryNote());
   await page.evaluate(()=>closeLibraryNote());await page.evaluate(()=>deleteNoteCategory());
   assert.equal(await page.evaluate(id=>cloud.noteLibrary.notes[id].category,id),'uncategorized');
-  await page.evaluate(()=>{selectNoteCategory('uncategorized');openLibraryNote('date_2026-11-07')});
+  await page.evaluate(()=>{selectNoteCategory('uncategorized');openLibraryNote('date_2026-11-07',true)});
   await page.locator('#libraryNoteBody').fill('기존 메모 편집');await page.evaluate(()=>saveLibraryNote());
   assert.equal(await page.evaluate(()=>cloud.dateNotes['2026-11-07'].text),'기존 메모 원본');
   await page.evaluate(()=>deleteLibraryNote());assert.equal(await page.locator('#notesBody .note-card').count(),1);
@@ -47,6 +56,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    await page.setViewportSize({width,height:950});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(400);await page.evaluate(()=>renderNoteCards());
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    assert.equal(await page.locator('.calendar').isVisible(),false);
+   await page.evaluate(()=>openLibraryNote(Object.keys(libraryNotes())[0]));
+   assert.equal(await page.locator('#noteReader').isVisible(),true);
+   assert.ok(await page.locator('#noteReader').evaluate(e=>e.scrollWidth<=e.clientWidth));
    if(width!==320)await page.screenshot({path:path.join(root,'tests', 'notes-library-'+width+'-'+theme+'.png'),fullPage:true});
   }
   await page.evaluate(()=>setViewMode('schedule'));assert.equal(await page.locator('.calendar').isVisible(),true);assert.equal(await page.locator('#notesPanel').isVisible(),false);

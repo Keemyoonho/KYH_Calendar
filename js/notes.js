@@ -1,5 +1,19 @@
 // Independent, owner-synced library. Legacy date notes remain intact.
 let noteLibrary={categories:{},notes:{}},activeNoteCategory='all',libraryDraft=null,libraryBusy=false;
+let viewedNoteId='';
+function setNoteSurface(mode){
+ document.getElementById('notesPanel').dataset.surface=mode;
+ document.getElementById('noteReader').hidden=mode!=='read';
+ document.getElementById('noteEditor').hidden=mode!=='edit';
+}
+function renderNoteReader(){
+ const note=libraryNotes()[viewedNoteId];
+ if(!note){viewedNoteId='';setNoteSurface('list');return;}
+ document.getElementById('noteReaderTitle').textContent=note.title||'제목 없는 메모';
+ document.getElementById('noteReaderMeta').textContent=libraryCategories()[noteCategoryOf(note)];
+ document.getElementById('noteReaderBody').textContent=note.text||'내용 없음';
+}
+function editViewedNote(){if(viewedNoteId)openLibraryNote(viewedNoteId,true);}
 const safeNoteKey=k=>/^[a-zA-Z0-9_-]+$/.test(k);
 const noteClone=v=>JSON.parse(JSON.stringify(v??null));
 function receiveNoteLibrary(data){noteLibrary=data.noteLibrary&&typeof data.noteLibrary==='object'?data.noteLibrary:{categories:{},notes:{}};}
@@ -23,6 +37,7 @@ function renderNotesPanel(){
  renderNoteCards();
  // Background sync never replaces an in-progress editor.
  if(libraryDraft)updateNoteCategoryOptions();
+ if(viewedNoteId&&document.getElementById('notesPanel').dataset.surface==='read')renderNoteReader();
 }
 function renderNoteCards(){
  const query=document.getElementById('notesSearch').value.trim().toLocaleLowerCase();
@@ -30,7 +45,7 @@ function renderNoteCards(){
  document.getElementById('notesCount').textContent=`${entries.length}개의 메모`;
  document.getElementById('notesBody').innerHTML=entries.map(([id,n])=>`<button class="note-card" type="button" onclick="openLibraryNote('${id}')"><div class="note-card-paper"><strong>${escapeHtml(n.title||'제목 없는 메모')}</strong><p>${escapeHtml(n.text||'내용 없음')}</p></div><div class="note-card-caption"><strong>${escapeHtml(n.title||'제목 없는 메모')}</strong><small>${escapeHtml(libraryCategories()[noteCategoryOf(n)])}${Number(n.updatedAt)>0?' · '+new Date(n.updatedAt).toLocaleDateString('ko-KR'):''}</small></div></button>`).join('')||'<div class="notes-empty">'+(query?'검색 결과가 없습니다.':'아직 메모가 없습니다.<br>새 메모를 추가해 보세요.')+'</div>';
 }
-function selectNoteCategory(id){activeNoteCategory=id;renderNotesPanel();}
+function selectNoteCategory(id){if(!canLeaveLibraryNote())return;libraryDraft=null;viewedNoteId='';setNoteSurface('list');activeNoteCategory=id;renderNotesPanel();}
 function uniqueNoteId(prefix){return prefix+'_'+Array.from(crypto.getRandomValues(new Uint32Array(4)),n=>n.toString(16).padStart(8,'0')).join('');}
 async function transactNoteLibrary(change){
  if(libraryBusy)return false;
@@ -82,9 +97,11 @@ function newLibraryNote(){
  if(!canLeaveLibraryNote())return;
  libraryDraft={id:uniqueNoteId('note'),base:null,title:'',text:'',category:activeNoteCategory==='all'?'uncategorized':activeNoteCategory,dirty:false};showLibraryEditor();
 }
-function openLibraryNote(id){
+function openLibraryNote(id,editing=false){
  if(!safeNoteKey(id)||!canLeaveLibraryNote())return;
  const n=libraryNotes()[id];if(!n)return;
+ viewedNoteId=id;
+ if(!editing){libraryDraft=null;setNoteSurface('read');renderNoteReader();document.getElementById('noteReaderTitle').focus({preventScroll:true});document.getElementById('noteReader').scrollIntoView({block:'nearest'});return;}
  libraryDraft={id,base:noteClone(noteLibrary.notes?.[id]),title:n.title||'',text:n.text||'',category:noteCategoryOf(n),dirty:false};showLibraryEditor();
 }
 function updateNoteCategoryOptions(){
@@ -93,14 +110,15 @@ function updateNoteCategoryOptions(){
  select.value=Object.hasOwn(libraryCategories(),category)?category:'uncategorized';
 }
 function showLibraryEditor(){
+ setNoteSurface('edit');
  document.getElementById('noteEditor').hidden=false;updateNoteCategoryOptions();
  document.getElementById('libraryNoteTitle').value=libraryDraft.title;
  document.getElementById('libraryNoteBody').value=libraryDraft.text;
  editorStatus('');document.getElementById('noteEditor').scrollIntoView({block:'nearest'});document.getElementById('libraryNoteTitle').focus({preventScroll:true});
 }
 function editLibraryNote(){if(!libraryDraft||libraryBusy)return;Object.assign(libraryDraft,{title:document.getElementById('libraryNoteTitle').value,text:document.getElementById('libraryNoteBody').value,category:document.getElementById('libraryNoteCategory').value,dirty:true});editorStatus('미저장');}
-function closeLibraryNote(){if(!canLeaveLibraryNote())return;libraryDraft=null;document.getElementById('noteEditor').hidden=true;}
-function reloadLibraryNote(){if(!libraryDraft||!canLeaveLibraryNote())return;const id=libraryDraft.id;libraryDraft=null;if(libraryNotes()[id])openLibraryNote(id);else{document.getElementById('noteEditor').hidden=true;libraryStatus('저장된 메모가 없습니다.');}}
+function closeLibraryNote(){if(!canLeaveLibraryNote())return;libraryDraft=null;viewedNoteId='';setNoteSurface('list');}
+function reloadLibraryNote(){if(!libraryDraft||!canLeaveLibraryNote())return;const id=libraryDraft.id;libraryDraft=null;if(libraryNotes()[id])openLibraryNote(id,true);else{document.getElementById('noteEditor').hidden=true;libraryStatus('저장된 메모가 없습니다.');}}
 function sameLibraryNote(a,b){if(!a||!b)return (a??null)===(b??null);return [...new Set([...Object.keys(a),...Object.keys(b)])].every(k=>a[k]===b[k]);}
 async function saveLibraryNote(){
  if(!libraryDraft||libraryBusy)return;editLibraryNote();const draft=noteClone(libraryDraft);
@@ -112,5 +130,5 @@ async function saveLibraryNote(){
 }
 async function deleteLibraryNote(){
  if(!libraryDraft||libraryBusy||!confirm('이 메모를 삭제할까요?'))return;const draft=noteClone(libraryDraft);
- if(await transactNoteLibrary(lib=>{if(!sameLibraryNote(lib.notes[draft.id],draft.base))return false;lib.notes[draft.id]={deleted:true,updatedAt:Date.now()};return true;})){libraryDraft=null;document.getElementById('noteEditor').hidden=true;}
+ if(await transactNoteLibrary(lib=>{if(!sameLibraryNote(lib.notes[draft.id],draft.base))return false;lib.notes[draft.id]={deleted:true,updatedAt:Date.now()};return true;})){libraryDraft=null;viewedNoteId='';setNoteSurface('list');}
 }

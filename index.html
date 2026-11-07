@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261107-notes-buy-v2">
+<link rel="stylesheet" href="./css/styles.css?v=20261107-note-reader">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -158,6 +158,12 @@
       <div class="notes-controls"><input id="notesSearch" type="search" placeholder="메모 검색" aria-label="메모 검색" oninput="renderNoteCards()"><div id="noteCategoryActions"></div></div>
       <p id="notesStatus" role="status"></p>
       <div class="notes-card-grid" id="notesBody"></div>
+      <section id="noteReader" hidden aria-label="메모 읽기">
+        <div class="notes-reader-actions"><button type="button" onclick="closeLibraryNote()">← 목록</button><button class="todo-add-btn" type="button" onclick="editViewedNote()">수정</button></div>
+        <h2 id="noteReaderTitle" tabindex="-1"></h2>
+        <div id="noteReaderMeta"></div>
+        <div id="noteReaderBody"></div>
+      </section>
       <section id="noteEditor" hidden aria-label="메모 편집">
         <div class="notes-editor-head"><span>메모 편집</span><button type="button" onclick="closeLibraryNote()">닫기</button></div>
         <label for="libraryNoteCategory">카테고리</label><select id="libraryNoteCategory" onchange="editLibraryNote()"></select>
@@ -372,9 +378,9 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20261107-notes-buy-v2"></script>
-<script src="./js/notes.js?v=20261107-notes-buy-v2"></script>
+<script src="./js/diary.js?v=20261107-note-reader"></script>
+<script src="./js/notes.js?v=20261107-note-reader"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261107-notes-buy-v2"></script>
+<script src="./js/app.js?v=20261107-note-reader"></script>
 </body>
 </html>
