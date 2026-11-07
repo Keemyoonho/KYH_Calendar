@@ -742,3 +742,18 @@ body.notes-view .calendar,body.notes-view .today-dashboard,body.notes-view .nav-
   .day .money-badge { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .day .schedule-expense-summary { display:block; text-align:right; }
 }
+/* Shopping items: one full-width row per item. */
+#buyList { display:flex; flex-direction:column; gap:0; }
+html[data-theme] #buyList > .todo-item { flex:none; width:100%; border:0; border-bottom:1px solid var(--glass-line); border-radius:0; background:transparent; padding:11px 0; gap:8px; }
+#buyList .buy-item-content { display:flex; align-items:center; flex-wrap:wrap; gap:7px 14px; }
+#buyList .buy-item-content > span { flex:1 1 120px; }
+#buyList .buy-item-description { flex:1 1 120px; margin:0; }
+#buyList .buy-item-price { flex:0 0 auto; margin:0; white-space:nowrap; }
+#buyList .goal-edit { flex-shrink:0; }
+#buyForm[hidden],#buyOpenButton[hidden] { display:none; }
+#buyOpenButton { margin-top:12px; padding:7px 15px; }
+@media(max-width:640px) {
+ #buyList .buy-item-content { gap:4px 10px; }
+ #buyList .buy-item-content > span { flex-basis:100%; }
+ #buyList .buy-item-description { flex-basis:80px; }
+}

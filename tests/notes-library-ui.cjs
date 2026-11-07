@@ -78,14 +78,23 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
     setViewMode('schedule');
   });
   assert.equal(await page.locator('#slotBody,#slotTitle,#quickMemo').count(),0);
-  await page.locator('#buyInput').fill('링크 물품');await page.locator('#buyLink').fill('https://example.com/product');
+  assert.equal(await page.locator('#buyForm').isVisible(),false);await page.locator('#buyOpenButton').click();assert.equal(await page.locator('#buyForm').isVisible(),true);await page.locator('#buyInput').fill('링크 물품');await page.locator('#buyLink').fill('https://example.com/product');
   await page.evaluate(()=>addBuy());
-  assert.equal(await page.locator('#buyList a').getAttribute('target'),'_blank');
+  assert.equal(await page.locator('#buyForm').isVisible(),false);assert.equal(await page.locator('#buyList a').getAttribute('target'),'_blank');
   assert.equal(await page.locator('#buyList a').getAttribute('href'),'https://example.com/product');
   await page.evaluate(()=>editBuy(0));assert.equal(await page.locator('#buyLink').inputValue(),'https://example.com/product');
   await page.locator('#buyLink').fill('javascript:alert(1)');await page.evaluate(()=>addBuy());
   assert.equal(await page.evaluate(()=>currentBuyList().items[0].link),'https://example.com/product');
   await page.locator('#buyLink').fill('');await page.evaluate(()=>addBuy());assert.equal(await page.locator('#buyList a').count(),0);
+  await page.evaluate(()=>{currentBuyList().items.push({text:'두 번째 물품',description:'제품 설명',price:3000,category:'tech'},{text:'이름이 아주 긴 물품 '.repeat(6),description:'상세 설명 '.repeat(8),price:250000,category:'medicine'});renderBuySlot()});
+  for(const width of [1280,390]){
+    await page.setViewportSize({width,height:1000});
+    const rows=await page.locator('#buyList>.todo-item').evaluateAll(es=>es.map(e=>({y:e.getBoundingClientRect().y,w:e.getBoundingClientRect().width})));
+    assert.equal(rows.length,3);assert.ok(rows.every((r,i)=>!i||r.y>rows[i-1].y));assert.ok(rows.every(r=>Math.abs(r.w-rows[0].w)<1));
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.locator('#buyList').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'tests','buy-rows-'+width+'.png')});
+  }
+  await page.locator('#buyOpenButton').click();await page.locator('#buyCancelEdit').click();assert.equal(await page.locator('#buyForm').isVisible(),false);
   assert.deepEqual(errors,[]);console.log('PASS: categories, CRUD, legacy preservation, sync conflict/offline/auth, search, mobile/desktop themes, calendar isolation');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

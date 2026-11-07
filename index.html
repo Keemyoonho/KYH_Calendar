@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261107-note-reader">
+<link rel="stylesheet" href="./css/styles.css?v=20261107-buy-rows">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -223,14 +223,15 @@
           </div>
         </div>
         <ul class="todo-list" id="buyList"></ul>
-        <div class="buy-form" onkeydown="buyKey(event)">
+        <button class="buy-add-btn" id="buyOpenButton" type="button" aria-expanded="false" aria-controls="buyForm" onclick="openBuyForm()">＋ 추가</button>
+        <div class="buy-form" id="buyForm" hidden onkeydown="buyKey(event)">
           <div class="mini-field"><label for="buyInput">물품명</label><input type="text" id="buyInput" placeholder="예: 무선 마우스" required /></div>
           <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="other" selected>📦 그 외</option></select></div>
           <div class="mini-field buy-description-field"><label for="buyDescription">물품 설명 (선택)</label><input type="text" id="buyDescription" placeholder="예: 검정색, 무소음" /></div>
           <div class="mini-field buy-description-field"><label for="buyLink">물품 링크 (선택)</label><input type="url" id="buyLink" placeholder="https://" /></div>
           <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="text" data-money inputmode="numeric" id="buyPrice" placeholder="예: 35,000" /></div>
           <button class="buy-add-btn" id="buySaveButton" type="button" onclick="addBuy()">추가</button>
-          <button class="goal-edit" id="buyCancelEdit" type="button" onclick="cancelBuyEdit()" hidden>수정 취소</button>
+          <button class="goal-edit" id="buyCancelEdit" type="button" onclick="cancelBuyEdit()">취소</button>
         </div>
         <div class="buy-slot-dots" id="buySlotDots"></div>
       </div>
@@ -378,9 +379,9 @@
   </div>
 </div>
 
-<script src="./js/diary.js?v=20261107-note-reader"></script>
-<script src="./js/notes.js?v=20261107-note-reader"></script>
+<script src="./js/diary.js?v=20261107-buy-rows"></script>
+<script src="./js/notes.js?v=20261107-buy-rows"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261107-note-reader"></script>
+<script src="./js/app.js?v=20261107-buy-rows"></script>
 </body>
 </html>

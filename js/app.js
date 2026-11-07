@@ -349,17 +349,29 @@ function currentBuyList() {
 // ── Buy list 슬롯 ──
 const BUY_CATEGORIES={tech:{icon:'💻',label:'테크'},food:{icon:'🍎',label:'음식'},medicine:{icon:'💊',label:'약품'},other:{icon:'📦',label:'그 외'}};
 let buyEditor=null;
+let buyFormContext='';
+function showBuyForm(){
+  buyFormContext=buyContext();
+  document.getElementById('buyForm').hidden=false;
+  document.getElementById('buyOpenButton').hidden=true;
+  document.getElementById('buyOpenButton').setAttribute('aria-expanded','true');
+}
+function openBuyForm(){cancelBuyEdit();showBuyForm();document.getElementById('buyInput').focus();}
 function buyContext(){return curBuySlot===0?'month:'+currentMonthKey():'slot:'+curBuySlot;}
 function cancelBuyEdit(){
   buyEditor=null;
   for(const id of ['buyInput','buyDescription','buyPrice','buyLink'])document.getElementById(id).value='';
   document.getElementById('buyCategory').value='other';
   document.getElementById('buySaveButton').textContent='추가';
-  document.getElementById('buyCancelEdit').hidden=true;
+  buyFormContext='';
+  document.getElementById('buyForm').hidden=true;
+  document.getElementById('buyOpenButton').hidden=false;
+  document.getElementById('buyOpenButton').setAttribute('aria-expanded','false');
 }
 function editBuy(i){
   const item=currentBuyList().items[i];if(!item)return;
   buyEditor={item,context:buyContext()};
+  showBuyForm();
   document.getElementById('buyInput').value=item.text||'';
   document.getElementById('buyDescription').value=item.description||'';
   document.getElementById('buyLink').value=item.link||'';
@@ -370,7 +382,7 @@ function editBuy(i){
   document.getElementById('buyInput').focus();
 }
 function renderBuySlot() {
-  if(buyEditor&&buyEditor.context!==buyContext())cancelBuyEdit();
+  if(buyFormContext&&buyFormContext!==buyContext())cancelBuyEdit();
   const slot = currentBuyList();
   document.getElementById('buySlotTitle').value = curBuySlot===0?'이 달의 구매 리스트':slot.title || '';
   document.getElementById('buySlotTitle').readOnly=curBuySlot===0;
