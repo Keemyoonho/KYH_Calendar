@@ -92,7 +92,7 @@ const TRANSACTION_CATS = {
 const PAYMENT_LABELS = { card: '카드', cash: '현금', transfer: '계좌이체', etc: '기타' };
 
 const SLOT_COUNT = 10;           // 주 메모 슬롯 (4 -> 10)
-const BUY_SLOT_COUNT = 10;       // Buy list 슬롯 개수
+const BUY_SLOT_COUNT = 20;       // Buy list 슬롯 개수
 let curSlot = 0;
 let curBuySlot = 0;
 let slots  = Array.from({length: SLOT_COUNT}, () => ({ title: '', body: '' }));
