@@ -599,6 +599,9 @@ function saveMonthlyBudget() {
 }
 
 function renderDashboard() {
+  const monthExpenses=getLedgerEntriesForMonth(cur.getFullYear(),cur.getMonth()).filter(entry=>entry.type==='expense');
+  document.getElementById('dashboardMonthExpense').textContent=formatWon(monthExpenses.reduce((sum,entry)=>sum+(Number(entry.amount)||0),0));
+  document.getElementById('dashboardMonthExpenseSub').textContent=`${cur.getMonth()+1}월 · ${monthExpenses.length}건의 지출`;
   const today=todayStr();
   const todayEvents=getEventsForDate(today).sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
   const todayExpenses=getLedgerEntriesForDate(today).filter(entry=>entry.type==='expense');
