@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261107-buy-rows">
+<link rel="stylesheet" href="./css/styles.css?v=20261111-buy-copy">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -223,6 +223,7 @@
           </div>
         </div>
         <ul class="todo-list" id="buyList"></ul>
+        <p id="buyMonthStatus" role="status" aria-live="polite"></p>
         <button class="buy-add-btn" id="buyOpenButton" type="button" aria-expanded="false" aria-controls="buyForm" onclick="openBuyForm()">＋ 추가</button>
         <div class="buy-form" id="buyForm" hidden onkeydown="buyKey(event)">
           <div class="mini-field"><label for="buyInput">물품명</label><input type="text" id="buyInput" placeholder="예: 무선 마우스" required /></div>
@@ -382,6 +383,6 @@
 <script src="./js/diary.js?v=20261107-buy-rows"></script>
 <script src="./js/notes.js?v=20261107-buy-rows"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261111-buy-categories"></script>
+<script src="./js/app.js?v=20261111-buy-copy"></script>
 </body>
 </html>

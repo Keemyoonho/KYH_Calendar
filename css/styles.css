@@ -750,6 +750,9 @@ html[data-theme] #buyList > .todo-item { flex:none; width:100%; border:0; border
 #buyList .buy-item-description { flex:1 1 120px; margin:0; }
 #buyList .buy-item-price { flex:0 0 auto; margin:0; white-space:nowrap; }
 #buyList .goal-edit { flex-shrink:0; }
+#buyList .buy-month-add { flex-shrink:0; background:var(--glass-inset); color:var(--glass-text); border:1px solid var(--glass-line); border-radius:6px; width:26px; height:26px; cursor:pointer; }
+#buyMonthStatus { font-size:.75rem; color:var(--glass-muted); margin:8px 0 0; overflow-wrap:anywhere; }
+#buyMonthStatus:empty { display:none; }
 #buyForm[hidden],#buyOpenButton[hidden] { display:none; }
 #buyOpenButton { margin-top:12px; padding:7px 15px; }
 @media(max-width:640px) {

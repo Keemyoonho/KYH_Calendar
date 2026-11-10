@@ -95,6 +95,16 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
     await page.locator('#buyList').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(root,'tests','buy-rows-'+width+'.png')});
   }
   await page.locator('#buyOpenButton').click();await page.locator('#buyCancelEdit').click();assert.equal(await page.locator('#buyForm').isVisible(),false);
+  await page.evaluate(()=>{curBuySlot=1;buySlots[1]={title:'보관 목록',items:[{text:'월별 복사',description:'설명',category:'care',price:16000,link:'https://example.com/item',done:true}]};renderBuySlot()});
+  await page.locator('.buy-month-add').click();
+  assert.equal(await page.evaluate(()=>monthlyBuyLists[currentMonthKey()].items.filter(i=>i.text==='월별 복사').length),1);
+  assert.equal(await page.evaluate(()=>monthlyBuyLists[currentMonthKey()].items.find(i=>i.text==='월별 복사').done),false);
+  assert.equal(await page.evaluate(()=>buySlots[1].items[0].done),true);
+  await page.locator('.buy-month-add').click();
+  assert.equal(await page.evaluate(()=>monthlyBuyLists[currentMonthKey()].items.filter(i=>i.text==='월별 복사').length),1);
+  await page.evaluate(()=>{cur.setMonth(cur.getMonth()+1);render();copyBuyToMonth(0)});
+  assert.equal(await page.evaluate(()=>monthlyBuyLists[currentMonthKey()].items[0].link),'https://example.com/item');
+  await page.evaluate(()=>goBuySlot(0));assert.equal(await page.locator('.buy-month-add').count(),0);
   assert.deepEqual(errors,[]);console.log('PASS: categories, CRUD, legacy preservation, sync conflict/offline/auth, search, mobile/desktop themes, calendar isolation');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

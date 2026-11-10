@@ -394,6 +394,7 @@ function renderBuySlot() {
     `<li class="todo-item">
       <input type="checkbox" class="buy-accent" ${b.done?'checked':''} onchange="toggleBuy(${i})" />
       <div class="buy-item-content"><span class="${b.done?'done':''}" onclick="toggleBuy(${i})"><span role="img" aria-label="${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).label}">${(BUY_CATEGORIES[b.category]||BUY_CATEGORIES.other).icon}</span> ${safeEventUrl(b.link)?`<a href="${escapeHtml(safeEventUrl(b.link))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${escapeHtml(b.text)}</a>`:escapeHtml(b.text)}</span>${b.description?`<div class="buy-item-description">${escapeHtml(b.description)}</div>`:''}${b.price!==''&&b.price!=null&&Number.isFinite(Number(b.price))?`<div class="buy-item-price">${Number(b.price).toLocaleString('ko-KR')}원</div>`:''}</div>
+      ${curBuySlot!==0?`<button class="buy-month-add" type="button" onclick="copyBuyToMonth(${i})" title="${currentMonthKey()} 구매 리스트에 추가" aria-label="${escapeHtml(b.text)} 이 달의 구매 리스트에 추가">＋</button>`:''}
       <button class="goal-edit" type="button" onclick="editBuy(${i})" aria-label="구매 항목 ${i+1} 수정">수정</button>
       <button class="del-todo" onclick="delBuy(${i})">&#10005;</button>
     </li>`
@@ -406,6 +407,19 @@ function saveBuySlotTitle() {
   if(curBuySlot===0)return;
   buySlots[curBuySlot].title = document.getElementById('buySlotTitle').value;
   scheduleSync();
+}
+function copyBuyToMonth(i){
+  if(curBuySlot===0)return;
+  const item=currentBuyList().items[i];if(!item)return;
+  const status=document.getElementById('buyMonthStatus');
+  if(!canSync()){status.textContent='로그인과 서버 연결을 확인해 주세요.';return;}
+  const key=currentMonthKey();
+  const target=monthlyBuyLists[key]||(monthlyBuyLists[key]={title:'',items:[]});
+  const same=other=>['text','description','category','price','link'].every(field=>String(other[field]??'')===String(item[field]??''));
+  if(target.items.some(same)){status.textContent=`${key} 구매 리스트에 이미 추가된 물품입니다.`;return;}
+  target.items.push({...item,done:false});
+  scheduleSync();
+  status.textContent=`${item.text} · ${key} 구매 리스트에 추가했습니다.`;
 }
 function changeBuySlot(d) { curBuySlot = Math.max(0, Math.min(BUY_SLOT_COUNT-1, curBuySlot+d)); renderBuySlot(); }
 function goBuySlot(i) { curBuySlot = i; renderBuySlot(); }
