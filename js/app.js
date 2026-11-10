@@ -347,7 +347,7 @@ function currentBuyList() {
   return monthlyBuyLists[key];
 }
 // ── Buy list 슬롯 ──
-const BUY_CATEGORIES={tech:{icon:'💻',label:'테크'},food:{icon:'🍎',label:'음식'},medicine:{icon:'💊',label:'약품'},other:{icon:'📦',label:'그 외'}};
+const BUY_CATEGORIES={tech:{icon:'💻',label:'테크'},food:{icon:'🍎',label:'음식'},medicine:{icon:'💊',label:'약품'},supplement:{icon:'🧴',label:'영양제'},cosmetics:{icon:'💄',label:'화장품'},clothing:{icon:'👕',label:'의류'},care:{icon:'🧼',label:'케어'},other:{icon:'📦',label:'그 외'}};
 let buyEditor=null;
 let buyFormContext='';
 function showBuyForm(){

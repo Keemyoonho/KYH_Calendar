@@ -226,7 +226,7 @@
         <button class="buy-add-btn" id="buyOpenButton" type="button" aria-expanded="false" aria-controls="buyForm" onclick="openBuyForm()">＋ 추가</button>
         <div class="buy-form" id="buyForm" hidden onkeydown="buyKey(event)">
           <div class="mini-field"><label for="buyInput">물품명</label><input type="text" id="buyInput" placeholder="예: 무선 마우스" required /></div>
-          <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="other" selected>📦 그 외</option></select></div>
+          <div class="mini-field"><label for="buyCategory">물품 종류</label><select id="buyCategory"><option value="tech">💻 테크</option><option value="food">🍎 음식</option><option value="medicine">💊 약품</option><option value="supplement">🧴 영양제</option><option value="cosmetics">💄 화장품</option><option value="clothing">👕 의류</option><option value="care">🧼 케어</option><option value="other" selected>📦 그 외</option></select></div>
           <div class="mini-field buy-description-field"><label for="buyDescription">물품 설명 (선택)</label><input type="text" id="buyDescription" placeholder="예: 검정색, 무소음" /></div>
           <div class="mini-field buy-description-field"><label for="buyLink">물품 링크 (선택)</label><input type="url" id="buyLink" placeholder="https://" /></div>
           <div class="mini-field"><label for="buyPrice">가격 (원, 선택)</label><input type="text" data-money inputmode="numeric" id="buyPrice" placeholder="예: 35,000" /></div>
@@ -382,6 +382,6 @@
 <script src="./js/diary.js?v=20261107-buy-rows"></script>
 <script src="./js/notes.js?v=20261107-buy-rows"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
-<script src="./js/app.js?v=20261108-buy20"></script>
+<script src="./js/app.js?v=20261111-buy-categories"></script>
 </body>
 </html>
