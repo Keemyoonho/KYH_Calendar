@@ -140,6 +140,14 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    const after=await page.locator('.note-format-toolbar').boundingBox();assert.equal(after.y,before.y);
    await page.screenshot({path:path.join(root,'tests','note-scroll-'+width+'.png')});
   }
+  await page.evaluate(()=>{
+    const body=document.getElementById('libraryNoteBody');body.innerHTML='';noteSelection=null;body.focus();
+    pasteLibraryNote({preventDefault(){},clipboardData:{files:[],getData(type){return type==='text/html'?'<p><b>첫 줄</b></p>\n  <p>둘째 줄</p>\n<p>셋째 줄</p>':''}}});
+  });
+  const ps=await page.locator('#libraryNoteBody p').evaluateAll(es=>es.map(e=>({y:e.getBoundingClientRect().y,h:e.getBoundingClientRect().height})));
+  assert.equal(ps.length,3);assert.ok(Math.abs(ps[1].y-ps[0].y-ps[0].h)<2);
+  assert.equal(await page.locator('#libraryNoteBody b').textContent(),'첫 줄');
+  assert.equal(await page.evaluate(()=>cleanNoteHtml('<p>첫 줄</p><p><br></p><p>셋째 줄</p>')),'<p>첫 줄</p><p><br></p><p>셋째 줄</p>');
   assert.deepEqual(errors,[]);console.log('PASS: categories, CRUD, legacy preservation, sync conflict/offline/auth, search, mobile/desktop themes, calendar isolation');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

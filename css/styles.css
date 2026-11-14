@@ -769,6 +769,7 @@ html[data-theme] #buyList > .todo-item { flex:none; width:100%; border:0; border
 html[data-theme] #libraryNoteBody::-webkit-scrollbar-thumb { background:var(--glass-muted); border-radius:6px; border:2px solid var(--glass-solid); }
 #libraryNoteBody img,#noteReaderBody img { display:block; max-width:100%; height:auto; border-radius:6px; margin:10px 0; }
 #libraryNoteBody ul,#libraryNoteBody ol,#noteReaderBody ul,#noteReaderBody ol { padding-left:1.7em; }
+#libraryNoteBody :is(p,div,ul,ol,li),#noteReaderBody :is(p,div,ul,ol,li) { margin-block:0; }
 #libraryNoteBody ul,#noteReaderBody ul { list-style:disc; }
 #libraryNoteBody ol,#noteReaderBody ol { list-style:decimal; }
 #noteImageFile[hidden] { display:none; }

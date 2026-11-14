@@ -7,7 +7,12 @@ function cleanNoteHtml(value){
  const output=document.createElement('div');
  const allowed=new Set(['B','STRONG','I','EM','U','S','STRIKE','DEL','UL','OL','LI','P','DIV','BR']);
  function copy(node,parent){
-  if(node.nodeType===3){parent.appendChild(document.createTextNode(node.textContent));return;}
+  if(node.nodeType===3){
+   // HTML source indentation between blocks is not an intentional blank line.
+   const block=n=>n?.nodeType===1&&['P','DIV','UL','OL','LI'].includes(n.tagName);
+   if(/^[\t\r\n ]*$/.test(node.textContent)&&/[\r\n]/.test(node.textContent)&&(block(node.previousSibling)||block(node.nextSibling)))return;
+   parent.appendChild(document.createTextNode(node.textContent.replace(/\r\n?/g,'\n')));return;
+  }
   if(node.nodeType!==1)return;
   if(['SCRIPT','STYLE','IFRAME','OBJECT','SVG','MATH','FORM','INPUT','BUTTON','VIDEO','AUDIO'].includes(node.tagName))return;
   if(node.tagName==='IMG'){
@@ -56,7 +61,7 @@ function pasteLibraryNote(event){
  const file=Array.from(event.clipboardData?.files||[]).find(f=>f.type.startsWith('image/'));
  if(file){insertNoteImage(file);return;}
  const rich=event.clipboardData?.getData('text/html'),plain=event.clipboardData?.getData('text/plain')||'';
- const html=rich?cleanNoteHtml(rich):escapeHtml(plain).replace(/\n/g,'<br>');
+ const html=rich?cleanNoteHtml(rich):escapeHtml(plain.replace(/\r\n?/g,'\n')).replace(/\n/g,'<br>');
  if(html.length+document.getElementById('libraryNoteBody').innerHTML.length>2*1024*1024){editorStatus('붙여넣을 내용이 너무 큽니다.');return;}
  restoreNoteSelection();document.execCommand('insertHTML',false,html);editLibraryNote();rememberNoteSelection();
 }
