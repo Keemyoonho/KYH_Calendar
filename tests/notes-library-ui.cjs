@@ -130,6 +130,16 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    if(width===390)await page.screenshot({path:path.join(root,'tests','rich-notes-'+theme+'.png'),fullPage:true});
   }
+  await page.locator('#libraryNoteBody').fill(Array.from({length:160},(_,i)=>'긴 메모 '+i).join('\n'));
+  for(const width of [1280,390]){
+   await page.setViewportSize({width,height:900});
+   await page.locator('.note-format-toolbar').scrollIntoViewIfNeeded();
+   const before=await page.locator('.note-format-toolbar').boundingBox();
+   const metrics=await page.locator('#libraryNoteBody').evaluate(e=>{e.scrollTop=e.scrollHeight;return {client:e.clientHeight,scroll:e.scrollHeight,top:e.scrollTop}});
+   assert.ok(metrics.scroll>metrics.client);assert.ok(metrics.top>0);assert.ok(metrics.client<=560);
+   const after=await page.locator('.note-format-toolbar').boundingBox();assert.equal(after.y,before.y);
+   await page.screenshot({path:path.join(root,'tests','note-scroll-'+width+'.png')});
+  }
   assert.deepEqual(errors,[]);console.log('PASS: categories, CRUD, legacy preservation, sync conflict/offline/auth, search, mobile/desktop themes, calendar isolation');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -714,7 +714,7 @@ body.notes-view .calendar,body.notes-view .today-dashboard,body.notes-view .nav-
 #noteEditor label { display:block; font-size:.75rem; margin:10px 0 7px; }
 #libraryNoteCategory,#libraryNoteTitle,#libraryNoteBody { display:block; width:100%; margin-bottom:12px; }
 #libraryNoteTitle { font-size:1.1rem!important; font-weight:700!important; }
-#libraryNoteBody { min-height:260px; resize:vertical; line-height:1.75; }
+#libraryNoteBody { min-height:240px; max-height:clamp(240px,50dvh,560px); overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; scrollbar-gutter:stable; resize:none; line-height:1.75; }
 .notes-editor-actions { display:flex; flex-wrap:wrap; align-items:center; gap:9px; font-size:.8rem; }
 #noteEditorStatus { color:var(--glass-muted); font-size:.75rem; }
 @media(max-width:640px) {
@@ -764,6 +764,9 @@ html[data-theme] #buyList > .todo-item { flex:none; width:100%; border:0; border
 #notesPanel .note-format-toolbar button:hover,#notesPanel .note-format-toolbar button[aria-pressed="true"] { background:var(--glass-hover); }
 #libraryNoteBody { background:var(--glass-field); border:1px solid var(--glass-line); border-radius:0 0 9px 9px; padding:14px; color:var(--glass-text); outline-offset:2px; font-size:16px; white-space:pre-wrap; overflow-wrap:anywhere; }
 #libraryNoteBody:empty::before { content:attr(data-placeholder); color:var(--glass-muted); pointer-events:none; }
+#libraryNoteBody::-webkit-scrollbar { width:10px; }
+#libraryNoteBody::-webkit-scrollbar-track { background:var(--glass-inset); }
+html[data-theme] #libraryNoteBody::-webkit-scrollbar-thumb { background:var(--glass-muted); border-radius:6px; border:2px solid var(--glass-solid); }
 #libraryNoteBody img,#noteReaderBody img { display:block; max-width:100%; height:auto; border-radius:6px; margin:10px 0; }
 #libraryNoteBody ul,#libraryNoteBody ol,#noteReaderBody ul,#noteReaderBody ol { padding-left:1.7em; }
 #libraryNoteBody ul,#noteReaderBody ul { list-style:disc; }
