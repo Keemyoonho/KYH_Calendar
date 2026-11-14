@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preload" href="./assets/fonts/OldLondon.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./css/styles.css?v=20261111-month-expense">
+<link rel="stylesheet" href="./css/styles.css?v=20261114-rich-notes">
 <script src="./js/theme.js?v=20260816"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -173,7 +173,17 @@
         <div class="notes-editor-head"><span>메모 편집</span><button type="button" onclick="closeLibraryNote()">닫기</button></div>
         <label for="libraryNoteCategory">카테고리</label><select id="libraryNoteCategory" onchange="editLibraryNote()"></select>
         <input id="libraryNoteTitle" maxlength="150" placeholder="제목" aria-label="메모 제목" oninput="editLibraryNote()">
-        <textarea id="libraryNoteBody" maxlength="20000" placeholder="내용을 입력하세요…" aria-label="메모 내용" oninput="editLibraryNote()"></textarea>
+        <div class="note-format-toolbar" role="toolbar" aria-label="메모 서식" onmousedown="event.preventDefault()">
+          <button type="button" data-note-command="bold" onclick="formatLibraryNote('bold')" title="굵게 (Ctrl+B)" aria-label="굵게"><b>B</b></button>
+          <button type="button" data-note-command="italic" onclick="formatLibraryNote('italic')" title="기울임 (Ctrl+I)" aria-label="기울임"><i>I</i></button>
+          <button type="button" data-note-command="underline" onclick="formatLibraryNote('underline')" title="밑줄 (Ctrl+U)" aria-label="밑줄"><u>U</u></button>
+          <button type="button" data-note-command="strikeThrough" onclick="formatLibraryNote('strikeThrough')" title="취소선" aria-label="취소선"><s>ab</s></button>
+          <button type="button" data-note-command="insertUnorderedList" onclick="formatLibraryNote('insertUnorderedList')" title="글머리표" aria-label="글머리표">☷</button>
+          <button type="button" onclick="chooseNoteImage()" title="이미지 삽입" aria-label="이미지 삽입">▧</button>
+        </div>
+        <input id="noteImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onchange="insertNoteImage(this.files[0]);this.value=''">
+        <div id="libraryNoteBody" class="note-rich-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="메모 내용" data-placeholder="내용을 입력하세요…" oninput="editLibraryNote()" onmouseup="rememberNoteSelection()" onkeyup="rememberNoteSelection()" onpaste="pasteLibraryNote(event)" ondrop="event.preventDefault()"></div>
+        <p class="note-image-hint">이미지당 500KB · 메모당 이미지 포함 2MB · 본문 최대 20,000자</p>
         <div class="notes-editor-actions"><button class="todo-add-btn" type="button" onclick="saveLibraryNote()">저장</button><button type="button" onclick="reloadLibraryNote()">저장본 불러오기</button><button type="button" onclick="deleteLibraryNote()">삭제</button><span id="noteEditorStatus" role="status"></span></div>
       </section>
     </div>
@@ -386,7 +396,7 @@
 </div>
 
 <script src="./js/diary.js?v=20261107-buy-rows"></script>
-<script src="./js/notes.js?v=20261107-buy-rows"></script>
+<script src="./js/notes.js?v=20261114-rich-notes"></script>
 <script src="./js/security.js?v=20261010-date-notes"></script>
 <script src="./js/app.js?v=20261111-month-expense"></script>
 </body>

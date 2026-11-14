@@ -759,3 +759,14 @@ html[data-theme] #buyList > .todo-item { flex:none; width:100%; border:0; border
  #buyList .buy-item-content > span { flex-basis:100%; }
  #buyList .buy-item-description { flex-basis:80px; }
 }
+.note-format-toolbar { display:flex; flex-wrap:wrap; gap:5px; padding:7px; border:1px solid var(--glass-line); border-radius:9px 9px 0 0; background:var(--glass-inset); }
+#notesPanel .note-format-toolbar button { min-width:36px; height:34px; padding:5px 8px; border:0; border-radius:5px; color:var(--glass-text); background:transparent; }
+#notesPanel .note-format-toolbar button:hover,#notesPanel .note-format-toolbar button[aria-pressed="true"] { background:var(--glass-hover); }
+#libraryNoteBody { background:var(--glass-field); border:1px solid var(--glass-line); border-radius:0 0 9px 9px; padding:14px; color:var(--glass-text); outline-offset:2px; font-size:16px; white-space:pre-wrap; overflow-wrap:anywhere; }
+#libraryNoteBody:empty::before { content:attr(data-placeholder); color:var(--glass-muted); pointer-events:none; }
+#libraryNoteBody img,#noteReaderBody img { display:block; max-width:100%; height:auto; border-radius:6px; margin:10px 0; }
+#libraryNoteBody ul,#libraryNoteBody ol,#noteReaderBody ul,#noteReaderBody ol { padding-left:1.7em; }
+#libraryNoteBody ul,#noteReaderBody ul { list-style:disc; }
+#libraryNoteBody ol,#noteReaderBody ol { list-style:decimal; }
+#noteImageFile[hidden] { display:none; }
+.note-image-hint { font-size:.7rem; color:var(--glass-muted); margin:0 0 12px; }

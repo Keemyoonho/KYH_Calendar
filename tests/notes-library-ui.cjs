@@ -37,11 +37,11 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.locator('#noteReader button').filter({hasText:'수정'}).click();
   assert.equal(await page.locator('#noteEditor').isVisible(),true);
   await page.locator('#libraryNoteBody').fill('작성 중');await page.evaluate(()=>{receiveDateNotes(cloud);render()});
-  assert.equal(await page.locator('#libraryNoteBody').inputValue(),'작성 중');
+  assert.equal(await page.locator('#libraryNoteBody').innerText(),'작성 중');
   await page.evaluate(async()=>{fail=true;await saveLibraryNote()});assert.equal(await page.evaluate(()=>libraryDraft.dirty),true);
-  await page.evaluate(async()=>{fail=false;cloud.noteLibrary.notes[libraryDraft.id].text='다른 기기';await saveLibraryNote()});
-  assert.match(await page.locator('#notesStatus').textContent(),/다른 기기/);assert.equal(await page.locator('#libraryNoteBody').inputValue(),'작성 중');
-  await page.evaluate(()=>reloadLibraryNote());assert.equal(await page.locator('#libraryNoteBody').inputValue(),'다른 기기');
+  await page.evaluate(async()=>{fail=false;cloud.noteLibrary.notes[libraryDraft.id].text='다른 기기';cloud.noteLibrary.notes[libraryDraft.id].html='다른 기기';await saveLibraryNote()});
+  assert.match(await page.locator('#notesStatus').textContent(),/다른 기기/);assert.equal(await page.locator('#libraryNoteBody').innerText(),'작성 중');
+  await page.evaluate(()=>reloadLibraryNote());assert.equal(await page.locator('#libraryNoteBody').innerText(),'다른 기기');
   await page.locator('#libraryNoteBody').fill('최종');await page.evaluate(()=>saveLibraryNote());
   await page.evaluate(()=>closeLibraryNote());await page.evaluate(()=>deleteNoteCategory());
   assert.equal(await page.evaluate(id=>cloud.noteLibrary.notes[id].category,id),'uncategorized');
@@ -105,6 +105,31 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.evaluate(()=>{cur.setMonth(cur.getMonth()+1);render();copyBuyToMonth(0)});
   assert.equal(await page.evaluate(()=>monthlyBuyLists[currentMonthKey()].items[0].link),'https://example.com/item');
   await page.evaluate(()=>goBuySlot(0));assert.equal(await page.locator('.buy-month-add').count(),0);
+  await page.evaluate(()=>{setViewMode('notes');newLibraryNote()});
+  await page.locator('#libraryNoteBody').fill('서식 확인');
+  await page.evaluate(()=>{const el=document.getElementById('libraryNoteBody'),range=document.createRange();range.selectNodeContents(el);getSelection().removeAllRanges();getSelection().addRange(range);rememberNoteSelection()});
+  for(const label of ['굵게','기울임','밑줄','취소선'])await page.getByRole('button',{name:label,exact:true}).click();
+  await page.getByRole('button',{name:'글머리표',exact:true}).click();
+  await page.evaluate(()=>{const range=document.createRange();range.selectNodeContents(document.getElementById('libraryNoteBody'));range.collapse(false);getSelection().removeAllRanges();getSelection().addRange(range);rememberNoteSelection()});
+  const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6VAAAAABJRU5ErkJggg==','base64');
+  await page.locator('#noteImageFile').setInputFiles({name:'image.png',mimeType:'image/png',buffer:pixel});
+  await page.waitForFunction(()=>document.querySelector('#libraryNoteBody img'));
+  await page.evaluate(()=>saveLibraryNote());
+  const richId=await page.evaluate(()=>libraryDraft.id);
+  const savedHtml=await page.evaluate(id=>cloud.noteLibrary.notes[id].html,richId);
+  for(const tag of ['b','i','u','strike','ul','img'])assert.match(savedHtml,new RegExp('<'+tag+'[ >]'));
+  await page.evaluate(id=>{closeLibraryNote();receiveDateNotes(cloud);openLibraryNote(id)},richId);
+  assert.equal(await page.locator('#noteReaderBody img').count(),1);
+  assert.equal(await page.locator('#noteReaderBody ul').count(),1);
+  await page.evaluate(()=>editViewedNote());assert.equal(await page.locator('#libraryNoteBody img').count(),1);
+  assert.equal(await page.evaluate(()=>cleanNoteHtml('<script>alert(1)</script><img src=x onerror=alert(1)><svg onload=alert(1)></svg><b onclick=x>안전</b>')),'<b>안전</b>');
+  await page.locator('#noteImageFile').setInputFiles({name:'big.png',mimeType:'image/png',buffer:Buffer.alloc(501*1024)});
+  assert.match(await page.locator('#noteEditorStatus').textContent(),/500KB/);
+  for(const width of [1280,390,320])for(const theme of ['light','dark']){
+   await page.setViewportSize({width,height:1000});await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350);
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+   if(width===390)await page.screenshot({path:path.join(root,'tests','rich-notes-'+theme+'.png'),fullPage:true});
+  }
   assert.deepEqual(errors,[]);console.log('PASS: categories, CRUD, legacy preservation, sync conflict/offline/auth, search, mobile/desktop themes, calendar isolation');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
